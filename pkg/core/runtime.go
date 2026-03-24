@@ -128,7 +128,14 @@ func InitializeRuntime(tier, version string) *RuntimeContext {
 }
 
 // completeActivation finalizes the activation after registration callback.
-func (rc *RuntimeContext) completeActivation(apiKey, tier string, customerID int) error {
+// If the provided key is an authorization_code, exchanges it for a real API key first.
+func (rc *RuntimeContext) completeActivation(authCodeOrKey, tier string, customerID int) error {
+	// Exchange authorization_code for real API key
+	apiKey, err := resolveAPIKey(authCodeOrKey)
+	if err != nil {
+		return fmt.Errorf("key exchange failed: %w", err)
+	}
+
 	rc.mu.Lock()
 	rc.apiKey = apiKey
 	rc.regURL = ""
@@ -495,6 +502,42 @@ func Shutdown(rc *RuntimeContext) {
 }
 
 // ── Internal functions ──────────────────────────────────────────────
+
+// exchangeCode trades an authorization_code for a real API key.
+func exchangeCode(code string) (apiKey string, err error) {
+	resp, err := postUnsigned("/v1/register/exchange", map[string]string{
+		"authorization_code": code,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", readErrorBody(resp)
+	}
+
+	var result struct {
+		APIKey string `json:"api_key"`
+	}
+	json.NewDecoder(resp.Body).Decode(&result)
+	if result.APIKey == "" {
+		return "", fmt.Errorf("exchange returned empty api_key")
+	}
+	return result.APIKey, nil
+}
+
+// resolveAPIKey resolves authorization_code to real api_key via exchange,
+// or returns the key directly if already an api_key.
+func resolveAPIKey(authCodeOrKey string) (string, error) {
+	// Try exchange first — if it fails with 404/400, it might already be an api_key
+	apiKey, err := exchangeCode(authCodeOrKey)
+	if err == nil && apiKey != "" {
+		return apiKey, nil
+	}
+	// Fallback: treat as api_key directly
+	return authCodeOrKey, nil
+}
 
 func activateInstance(rc *RuntimeContext, version string) error {
 	resp, err := postSigned("/v1/activate", map[string]string{
