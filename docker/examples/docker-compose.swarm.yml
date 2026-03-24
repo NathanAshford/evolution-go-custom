@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  evolution_go:
+    image: evoapicloud/evolution-go:latest
+    networks:
+      - network_public
+    environment:
+      # Servidor
+      SERVER_PORT: 4000
+      CLIENT_NAME: "evolution"
+
+      # Segurança (OBRIGATÓRIO)
+      GLOBAL_API_KEY: "sua-chave-api-segura-aqui"
+
+      # Banco de Dados PostgreSQL (RECOMENDADO)
+      POSTGRES_AUTH_DB: "postgresql://postgres:senha@postgres:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://postgres:senha@postgres:5432/evogo_users?sslmode=disable"
+      DATABASE_SAVE_MESSAGES: "false"
+
+      # Logs e Debug
+      WADEBUG: "INFO"
+      LOGTYPE: "console"
+      LOG_DIRECTORY: "/app/logs"
+      LOG_MAX_SIZE: "100"
+      LOG_MAX_BACKUPS: "5"
+      LOG_MAX_AGE: "30"
+      LOG_COMPRESS: "true"
+
+      # Conexão
+      CONNECT_ON_STARTUP: "true"
+      WEBHOOKFILES: "true"
+
+      # Sistema
+      OS_NAME: "Linux"
+
+      # Conversor de Áudio (Opcional)
+      API_AUDIO_CONVERTER: ""
+      API_AUDIO_CONVERTER_KEY: ""
+
+      # Proxy (Opcional)
+      PROXY_HOST: ""
+      PROXY_PORT: ""
+      PROXY_USERNAME: ""
+      PROXY_PASSWORD: ""
+
+      # RabbitMQ (Opcional)
+      AMQP_URL: ""
+      AMQP_GLOBAL_ENABLED: "false"
+      AMQP_GLOBAL_EVENTS: ""
+
+      # NATS (Opcional)
+      NATS_URL: ""
+      NATS_GLOBAL_ENABLED: "false"
+
+      # Eventos
+      EVENT_IGNORE_GROUP: "false"
+      EVENT_IGNORE_STATUS: "true"
+
+      # MinIO/S3 (Opcional)
+      MINIO_ENABLED: "false"
+      MINIO_ENDPOINT: ""
+      MINIO_ACCESS_KEY: ""
+      MINIO_SECRET_KEY: ""
+      MINIO_BUCKET: ""
+      MINIO_USE_SSL: "false"
+
+    volumes:
+      - evolution_go_data:/app/dbdata
+      - evolution_go_logs:/app/logs
+
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      labels:
+        # Traefik Labels (ajuste conforme necessário)
+        - traefik.enable=true
+        - traefik.http.routers.evolution_go.rule=Host(`evolution.seudominio.com`)
+        - traefik.http.routers.evolution_go.entrypoints=websecure
+        - traefik.http.routers.evolution_go.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.evolution_go.service=evolution_go
+        - traefik.http.services.evolution_go.loadbalancer.server.port=4000
+        - traefik.http.services.evolution_go.loadbalancer.passHostHeader=true
+
+volumes:
+  evolution_go_data:
+    external: true
+    name: evolution_go_data
+  evolution_go_logs:
+    external: true
+    name: evolution_go_logs
+
+networks:
+  network_public:
+    external: true
+    name: network_public

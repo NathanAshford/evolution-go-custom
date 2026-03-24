@@ -1,0 +1,48 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+# docs/ - Mantido porque docs/docs.go é necessário para o build (gerado pelo swagger)
+docs/wiki/
+
+# Logs
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+server
+build/
+
+# Docker
+Dockerfile
+.dockerignore
+docker/
+
+# Scripts
+*.sh
+Makefile
+
+# Test files
+*_test.go
+*.test
+
+# Manager/dist é necessário - serve arquivos estáticos do frontend React
+# Não excluir - precisa estar na imagem final para ser acessado via /manager
+
+# Keep these important files/folders for build:
+# - whatsmeow/ (nossa versão local modificada)
+# - go.mod, go.sum (dependências)
+# - pkg/, cmd/ (código fonte necessário para compilar)
+# - docs/docs.go (gerado pelo swagger, necessário para build)
+
+# IMPORTANT: O código-fonte (pkg/, cmd/, etc.) é necessário no stage de build
+# mas NÃO é copiado para a imagem final - apenas o executável compilado vai.

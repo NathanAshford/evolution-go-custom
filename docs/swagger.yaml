@@ -1,0 +1,2134 @@
+definitions:
+  gin.H:
+    additionalProperties: {}
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct:
+    properties:
+      chat:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_community_service.AddParticipantStruct:
+    properties:
+      communityJid:
+        type: string
+      groupJid:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_community_service.CreateCommunityStruct:
+    properties:
+      communityName:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_group_service.AddParticipantStruct:
+    properties:
+      action:
+        $ref: '#/definitions/whatsmeow.ParticipantChange'
+      groupJid:
+        $ref: '#/definitions/types.JID'
+      participants:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_group_service.CreateGroupStruct:
+    properties:
+      groupName:
+        type: string
+      participants:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_group_service.GetGroupInfoStruct:
+    properties:
+      groupJid:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_group_service.GetGroupInviteLinkStruct:
+    properties:
+      groupJid:
+        type: string
+      reset:
+        type: boolean
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_group_service.JoinGroupStruct:
+    properties:
+      code:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_group_service.SetGroupNameStruct:
+    properties:
+      groupJid:
+        type: string
+      name:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_group_service.SetGroupPhotoStruct:
+    properties:
+      groupJid:
+        type: string
+      image:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_instance_service.ConnectStruct:
+    properties:
+      immediate:
+        type: boolean
+      phone:
+        type: string
+      subscribe:
+        items:
+          type: string
+        type: array
+      webhookUrl:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_instance_service.CreateStruct:
+    properties:
+      name:
+        type: string
+      proxy:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_instance_service.ProxyConfig'
+      token:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_instance_service.PairStruct:
+    properties:
+      phone:
+        type: string
+      subscribe:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_instance_service.ProxyConfig:
+    properties:
+      address:
+        type: string
+      password:
+        type: string
+      port:
+        type: string
+      username:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_label_service.ChatLabelStruct:
+    properties:
+      jid:
+        type: string
+      labelId:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_label_service.EditLabelStruct:
+    properties:
+      color:
+        type: integer
+      deleted:
+        type: boolean
+      labelId:
+        type: string
+      name:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_label_service.MessageLabelStruct:
+    properties:
+      jid:
+        type: string
+      labelId:
+        type: string
+      messageId:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_message_service.ChatPresenceStruct:
+    properties:
+      isAudio:
+        type: boolean
+      number:
+        type: string
+      state:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_message_service.DownloadImageStruct:
+    properties:
+      directPath:
+        type: string
+      fileEncSHA256:
+        items:
+          type: integer
+        type: array
+      fileLength:
+        type: integer
+      fileSHA256:
+        items:
+          type: integer
+        type: array
+      mediaKey:
+        items:
+          type: integer
+        type: array
+      mimetype:
+        type: string
+      url:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_message_service.EditMessageStruct:
+    properties:
+      chat:
+        type: string
+      message:
+        type: string
+      messageId:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_message_service.MarkReadStruct:
+    properties:
+      id:
+        items:
+          type: string
+        type: array
+      number:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_message_service.MessageStatusStruct:
+    properties:
+      id:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_message_service.MessageStruct:
+    properties:
+      chat:
+        type: string
+      messageId:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_message_service.ReactStruct:
+    properties:
+      id:
+        type: string
+      number:
+        type: string
+      reaction:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_newsletter_service.CreateNewsletterStruct:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterInviteStruct:
+    properties:
+      key:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterMessagesStruct:
+    properties:
+      before_id:
+        type: integer
+      count:
+        type: integer
+      jid:
+        $ref: '#/definitions/types.JID'
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterStruct:
+    properties:
+      jid:
+        $ref: '#/definitions/types.JID'
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.ContactStruct:
+    properties:
+      delay:
+        type: integer
+      id:
+        type: string
+      mentionAll:
+        type: boolean
+      mentionedJid:
+        type: string
+      number:
+        type: string
+      quoted:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct'
+      vcard:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_utils.VCardStruct'
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.LinkStruct:
+    properties:
+      delay:
+        type: integer
+      description:
+        type: string
+      id:
+        type: string
+      imgUrl:
+        type: string
+      mentionAll:
+        type: boolean
+      mentionedJid:
+        type: string
+      number:
+        type: string
+      quoted:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct'
+      text:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.LocationStruct:
+    properties:
+      address:
+        type: string
+      delay:
+        type: integer
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      mentionAll:
+        type: boolean
+      mentionedJid:
+        type: string
+      name:
+        type: string
+      number:
+        type: string
+      quoted:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct'
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.MediaStruct:
+    properties:
+      caption:
+        type: string
+      delay:
+        type: integer
+      filename:
+        type: string
+      id:
+        type: string
+      mentionAll:
+        type: boolean
+      mentionedJid:
+        type: string
+      number:
+        type: string
+      quoted:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct'
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.PollStruct:
+    properties:
+      delay:
+        type: integer
+      id:
+        type: string
+      maxAnswer:
+        type: integer
+      mentionAll:
+        type: boolean
+      mentionedJid:
+        type: string
+      number:
+        type: string
+      options:
+        items:
+          type: string
+        type: array
+      question:
+        type: string
+      quoted:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct'
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct:
+    properties:
+      messageId:
+        type: string
+      participant:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.StickerStruct:
+    properties:
+      delay:
+        type: integer
+      id:
+        type: string
+      mentionAll:
+        type: boolean
+      mentionedJid:
+        type: string
+      number:
+        type: string
+      quoted:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct'
+      sticker:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.TextStruct:
+    properties:
+      delay:
+        type: integer
+      id:
+        type: string
+      mentionAll:
+        type: boolean
+      mentionedJid:
+        type: string
+      number:
+        type: string
+      quoted:
+        $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct'
+      text:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_user_service.BlockStruct:
+    properties:
+      number:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_user_service.CheckUserStruct:
+    properties:
+      number:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_user_service.GetAvatarStruct:
+    properties:
+      number:
+        type: string
+      preview:
+        type: boolean
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_user_service.SetProfilePictureStruct:
+    properties:
+      image:
+        type: string
+    type: object
+  github_com_Zapbox-API_evolution-go_pkg_utils.VCardStruct:
+    properties:
+      fullName:
+        type: string
+      organization:
+        type: string
+      phone:
+        type: string
+    type: object
+  types.JID:
+    properties:
+      device:
+        type: integer
+      integrator:
+        type: integer
+      rawAgent:
+        type: integer
+      server:
+        type: string
+      user:
+        type: string
+    type: object
+  whatsmeow.ParticipantChange:
+    enum:
+    - add
+    - remove
+    - promote
+    - demote
+    type: string
+    x-enum-varnames:
+    - ParticipantChangeAdd
+    - ParticipantChangeRemove
+    - ParticipantChangePromote
+    - ParticipantChangeDemote
+info:
+  contact: {}
+  description: Evolution GO - whatsmeow
+  title: Evolution GO
+  version: "1.0"
+paths:
+  /chat/archive:
+    post:
+      consumes:
+      - application/json
+      description: Archive a chat
+      parameters:
+      - description: Chat
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Archive a chat
+      tags:
+      - Chat
+  /chat/mute:
+    post:
+      consumes:
+      - application/json
+      description: Mute a chat
+      parameters:
+      - description: Chat
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Mute a chat
+      tags:
+      - Chat
+  /chat/pin:
+    post:
+      consumes:
+      - application/json
+      description: Pin a chat
+      parameters:
+      - description: Chat
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Pin a chat
+      tags:
+      - Chat
+  /chat/unpin:
+    post:
+      consumes:
+      - application/json
+      description: Unpin a chat
+      parameters:
+      - description: Chat
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Unpin a chat
+      tags:
+      - Chat
+  /community/add:
+    post:
+      consumes:
+      - application/json
+      description: Add participant to community
+      parameters:
+      - description: Participant data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_community_service.AddParticipantStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Add participant to community
+      tags:
+      - Community
+  /community/create:
+    post:
+      consumes:
+      - application/json
+      description: Create community
+      parameters:
+      - description: Community data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_community_service.CreateCommunityStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create community
+      tags:
+      - Community
+  /community/remove:
+    post:
+      consumes:
+      - application/json
+      description: Remove participant from community
+      parameters:
+      - description: Participant data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_community_service.AddParticipantStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Remove participant from community
+      tags:
+      - Community
+  /group/create:
+    post:
+      consumes:
+      - application/json
+      description: Create group
+      parameters:
+      - description: Group data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.CreateGroupStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create group
+      tags:
+      - Group
+  /group/info:
+    post:
+      consumes:
+      - application/json
+      description: Get group info
+      parameters:
+      - description: Group data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.GetGroupInfoStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get group info
+      tags:
+      - Group
+  /group/invitelink:
+    post:
+      consumes:
+      - application/json
+      description: Get group invite link
+      parameters:
+      - description: Group data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.GetGroupInviteLinkStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get group invite link
+      tags:
+      - Group
+  /group/join:
+    post:
+      consumes:
+      - application/json
+      description: Join group link
+      parameters:
+      - description: Group data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.JoinGroupStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Join group link
+      tags:
+      - Group
+  /group/list:
+    get:
+      consumes:
+      - application/json
+      description: List groups
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: List groups
+      tags:
+      - Group
+  /group/myall:
+    get:
+      consumes:
+      - application/json
+      description: Get my groups
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get my groups
+      tags:
+      - Group
+  /group/name:
+    post:
+      consumes:
+      - application/json
+      description: Set group name
+      parameters:
+      - description: Group data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.SetGroupNameStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Set group name
+      tags:
+      - Group
+  /group/participant:
+    post:
+      consumes:
+      - application/json
+      description: Update participant
+      parameters:
+      - description: Group data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.AddParticipantStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Update participant
+      tags:
+      - Group
+  /group/photo:
+    post:
+      consumes:
+      - application/json
+      description: Set group photo
+      parameters:
+      - description: Group data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.SetGroupPhotoStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Set group photo
+      tags:
+      - Group
+  /instance/all:
+    get:
+      consumes:
+      - application/json
+      description: Get all instances
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All instances
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get all instances
+      tags:
+      - Instance
+  /instance/connect:
+    post:
+      consumes:
+      - application/json
+      description: Connect to instance with the provided data
+      parameters:
+      - description: Instance data
+        in: body
+        name: instance
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_instance_service.ConnectStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Instance connected successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Connect to instance
+      tags:
+      - Instance
+  /instance/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new instance with the provided data
+      parameters:
+      - description: Instance data
+        in: body
+        name: instance
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_instance_service.CreateStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Instance created successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create a new instance
+      tags:
+      - Instance
+  /instance/delete/{instanceId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete instance
+      parameters:
+      - description: Instance Id
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Instance deleted successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Delete instance
+      tags:
+      - Instance
+  /instance/disconnect:
+    post:
+      consumes:
+      - application/json
+      description: Disconnect from instance
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Instance disconnected successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Disconnect from instance
+      tags:
+      - Instance
+  /instance/logout:
+    delete:
+      consumes:
+      - application/json
+      description: Logout from instance
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Instance logged out successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Logout from instance
+      tags:
+      - Instance
+  /instance/pair:
+    post:
+      consumes:
+      - application/json
+      description: Request pairing code
+      parameters:
+      - description: Instance data
+        in: body
+        name: instance
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_instance_service.PairStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pairing code
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Request pairing code
+      tags:
+      - Instance
+  /instance/proxy/{instanceId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete proxy
+      parameters:
+      - description: Instance id
+        in: path
+        name: instanceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Proxy deleted successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Delete proxy
+      tags:
+      - Instance
+  /instance/qr:
+    get:
+      consumes:
+      - application/json
+      description: Get instance QR code
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Instance QR code
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get instance QR code
+      tags:
+      - Instance
+  /instance/status:
+    get:
+      consumes:
+      - application/json
+      description: Get instance status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Instance status
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get instance status
+      tags:
+      - Instance
+  /label/chat:
+    post:
+      consumes:
+      - application/json
+      description: Add label to chat
+      parameters:
+      - description: Label data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.ChatLabelStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Add label to chat
+      tags:
+      - Label
+  /label/edit:
+    post:
+      consumes:
+      - application/json
+      description: Edit label
+      parameters:
+      - description: Label data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.EditLabelStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Edit label
+      tags:
+      - Label
+  /label/message:
+    post:
+      consumes:
+      - application/json
+      description: Add label to message
+      parameters:
+      - description: Label data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.MessageLabelStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Add label to message
+      tags:
+      - Label
+  /message/delete:
+    post:
+      consumes:
+      - application/json
+      description: Delete a message for everyone
+      parameters:
+      - description: Delete a message for everyone
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.MessageStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Delete a message for everyone
+      tags:
+      - Message
+  /message/downloadimage:
+    post:
+      consumes:
+      - application/json
+      description: Download an image
+      parameters:
+      - description: Download an image
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.DownloadImageStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Download an image
+      tags:
+      - Message
+  /message/edit:
+    post:
+      consumes:
+      - application/json
+      description: Edit a message
+      parameters:
+      - description: Edit a message
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.EditMessageStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Edit a message
+      tags:
+      - Message
+  /message/markread:
+    post:
+      consumes:
+      - application/json
+      description: Mark a message as read
+      parameters:
+      - description: Mark a message as read
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.MarkReadStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Mark a message as read
+      tags:
+      - Message
+  /message/presence:
+    post:
+      consumes:
+      - application/json
+      description: Set chat presence
+      parameters:
+      - description: Set chat presence
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.ChatPresenceStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Set chat presence
+      tags:
+      - Message
+  /message/react:
+    post:
+      consumes:
+      - application/json
+      description: React a message
+      parameters:
+      - description: React a message
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.ReactStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: React a message
+      tags:
+      - Message
+  /message/status:
+    post:
+      consumes:
+      - application/json
+      description: Get message status
+      parameters:
+      - description: Get message status
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.MessageStatusStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get message status
+      tags:
+      - Message
+  /newsletter/create:
+    post:
+      consumes:
+      - application/json
+      description: Create newsletter
+      parameters:
+      - description: Newsletter data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.CreateNewsletterStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create newsletter
+      tags:
+      - Newsletter
+  /newsletter/info:
+    post:
+      consumes:
+      - application/json
+      description: Get newsletter
+      parameters:
+      - description: Newsletter data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get newsletter
+      tags:
+      - Newsletter
+  /newsletter/link:
+    post:
+      consumes:
+      - application/json
+      description: Get newsletter invite
+      parameters:
+      - description: Newsletter data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterInviteStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get newsletter invite
+      tags:
+      - Newsletter
+  /newsletter/list:
+    get:
+      consumes:
+      - application/json
+      description: List newsletters
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: List newsletters
+      tags:
+      - Newsletter
+  /newsletter/messages:
+    post:
+      consumes:
+      - application/json
+      description: Get newsletter messages
+      parameters:
+      - description: Newsletter data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterMessagesStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get newsletter messages
+      tags:
+      - Newsletter
+  /newsletter/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: Subscribe newsletter
+      parameters:
+      - description: Newsletter data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Subscribe newsletter
+      tags:
+      - Newsletter
+  /send/contact:
+    post:
+      consumes:
+      - application/json
+      description: Send a contact message
+      parameters:
+      - description: Message data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.ContactStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Send a contact message
+      tags:
+      - Send Message
+  /send/link:
+    post:
+      consumes:
+      - application/json
+      description: Send a link message
+      parameters:
+      - description: Message data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.LinkStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Send a link message
+      tags:
+      - Send Message
+  /send/location:
+    post:
+      consumes:
+      - application/json
+      description: Send a location message
+      parameters:
+      - description: Message data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.LocationStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Send a location message
+      tags:
+      - Send Message
+  /send/media:
+    post:
+      consumes:
+      - application/json
+      description: Send a media message
+      parameters:
+      - description: Message data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.MediaStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Send a media message
+      tags:
+      - Send Message
+  /send/poll:
+    post:
+      consumes:
+      - application/json
+      description: Send a poll message
+      parameters:
+      - description: Message data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.PollStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Send a poll message
+      tags:
+      - Send Message
+  /send/sticker:
+    post:
+      consumes:
+      - application/json
+      description: Send a sticker message
+      parameters:
+      - description: Message data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.StickerStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Send a sticker message
+      tags:
+      - Send Message
+  /send/text:
+    post:
+      consumes:
+      - application/json
+      description: Send a text message
+      parameters:
+      - description: Message data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.TextStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Send a text message
+      tags:
+      - Send Message
+  /unlabel/chat:
+    post:
+      consumes:
+      - application/json
+      description: Remove label from chat
+      parameters:
+      - description: Label data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.ChatLabelStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Remove label from chat
+      tags:
+      - Label
+  /unlabel/message:
+    post:
+      consumes:
+      - application/json
+      description: Remove label from message
+      parameters:
+      - description: Label data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.MessageLabelStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Remove label from message
+      tags:
+      - Label
+  /user/avatar:
+    post:
+      consumes:
+      - application/json
+      description: Get a user's avatar
+      parameters:
+      - description: Avatar data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.GetAvatarStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a user's avatar
+      tags:
+      - User
+  /user/block:
+    post:
+      consumes:
+      - application/json
+      description: Block a contact
+      parameters:
+      - description: Block data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.BlockStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Block a contact
+      tags:
+      - User
+  /user/blocklist:
+    get:
+      consumes:
+      - application/json
+      description: Get a user's block list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a user's block list
+      tags:
+      - User
+  /user/check:
+    post:
+      consumes:
+      - application/json
+      description: Check a user
+      parameters:
+      - description: User data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.CheckUserStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Check a user
+      tags:
+      - User
+  /user/contacts:
+    get:
+      consumes:
+      - application/json
+      description: Get a user's contacts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a user's contacts
+      tags:
+      - User
+  /user/info:
+    post:
+      consumes:
+      - application/json
+      description: Get a user
+      parameters:
+      - description: User data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.CheckUserStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a user
+      tags:
+      - User
+  /user/privacy:
+    get:
+      consumes:
+      - application/json
+      description: Get a user's privacy settings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a user's privacy settings
+      tags:
+      - User
+  /user/profile:
+    post:
+      consumes:
+      - application/json
+      description: Set a user's profile picture
+      parameters:
+      - description: Profile picture data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.SetProfilePictureStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Set a user's profile picture
+      tags:
+      - User
+  /user/unblock:
+    post:
+      consumes:
+      - application/json
+      description: Unblock a contact
+      parameters:
+      - description: Block data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.BlockStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Error on validation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Unblock a contact
+      tags:
+      - User
+swagger: "2.0"

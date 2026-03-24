@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  evolution-go:
+    image: evoapicloud/evolution-go:latest
+    container_name: evolution-go
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      # Servidor
+      SERVER_PORT: 4000
+      CLIENT_NAME: "evolution"
+
+      # Segurança
+      GLOBAL_API_KEY: "sua-chave-api-segura-aqui"
+
+      # Banco de Dados PostgreSQL
+      POSTGRES_AUTH_DB: "postgresql://postgres:postgres@postgres:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://postgres:postgres@postgres:5432/evogo_users?sslmode=disable"
+      DATABASE_SAVE_MESSAGES: "true"
+
+      # Logs e Debug
+      WADEBUG: "DEBUG"
+      LOGTYPE: "console"
+      LOG_DIRECTORY: "/app/logs"
+      LOG_MAX_SIZE: "100"
+      LOG_MAX_BACKUPS: "5"
+      LOG_MAX_AGE: "30"
+      LOG_COMPRESS: "true"
+
+      # Conexão
+      CONNECT_ON_STARTUP: "false"
+      WEBHOOKFILES: "true"
+
+      # Sistema
+      OS_NAME: "Linux"
+
+      # Webhook
+      WEBHOOK_URL: "https://seu-webhook.com/endpoint"
+
+      # RabbitMQ
+      AMQP_URL: "amqp://admin:admin@rabbitmq:5672/default"
+      AMQP_GLOBAL_ENABLED: "true"
+      AMQP_GLOBAL_EVENTS: "messages.upsert,messages.update,connection.update"
+      AMQP_SPECIFIC_EVENTS: ""
+
+      # NATS
+      NATS_URL: "nats://nats:4222"
+      NATS_GLOBAL_ENABLED: "false"
+      NATS_GLOBAL_EVENTS: ""
+
+      # MinIO
+      MINIO_ENABLED: "true"
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: "minioadmin"
+      MINIO_SECRET_KEY: "minioadmin"
+      MINIO_BUCKET: "evolution-media"
+      MINIO_USE_SSL: "false"
+      MINIO_REGION: "us-east-1"
+
+      # Eventos
+      EVENT_IGNORE_GROUP: "false"
+      EVENT_IGNORE_STATUS: "true"
+
+      # QR Code
+      QRCODE_MAX_COUNT: "5"
+
+      # Verificação de Usuário
+      CHECK_USER_EXISTS: "true"
+
+    volumes:
+      - evolution_data:/app/dbdata
+      - evolution_logs:/app/logs
+    networks:
+      - evolution_network
+    depends_on:
+      - postgres
+      - rabbitmq
+      - minio
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: evolution-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - evolution_network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: evolution-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_VHOST: default
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - evolution_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: evolution-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - evolution_network
+
+volumes:
+  evolution_data:
+    driver: local
+  evolution_logs:
+    driver: local
+  postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  evolution_network:
+    driver: bridge

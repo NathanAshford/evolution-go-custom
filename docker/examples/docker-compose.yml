@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  evolution-go:
+    image: evoapicloud/evolution-go:latest
+    container_name: evolution-go
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      # Servidor
+      SERVER_PORT: 4000
+      CLIENT_NAME: "evolution"
+
+      # Segurança (OBRIGATÓRIO)
+      GLOBAL_API_KEY: "sua-chave-api-segura-aqui"
+
+      # Banco de Dados PostgreSQL (RECOMENDADO)
+      POSTGRES_AUTH_DB: "postgresql://postgres:postgres@postgres:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://postgres:postgres@postgres:5432/evogo_users?sslmode=disable"
+      DATABASE_SAVE_MESSAGES: "false"
+
+      # Logs e Debug
+      WADEBUG: "INFO"
+      LOGTYPE: "console"
+      LOG_DIRECTORY: "/app/logs"
+      LOG_MAX_SIZE: "100"
+      LOG_MAX_BACKUPS: "5"
+      LOG_MAX_AGE: "30"
+      LOG_COMPRESS: "true"
+
+      # Conexão
+      CONNECT_ON_STARTUP: "false"
+      WEBHOOKFILES: "true"
+
+      # Sistema
+      OS_NAME: "Linux"
+
+      # Eventos (Opcionais)
+      WEBHOOK_URL: ""
+      AMQP_URL: ""
+      AMQP_GLOBAL_ENABLED: "false"
+      NATS_URL: ""
+      NATS_GLOBAL_ENABLED: "false"
+
+      # Armazenamento de Mídia (Opcional)
+      MINIO_ENABLED: "false"
+
+      # Proxy (Opcional)
+      PROXY_HOST: ""
+      PROXY_PORT: ""
+      PROXY_USERNAME: ""
+      PROXY_PASSWORD: ""
+
+      # Eventos
+      EVENT_IGNORE_GROUP: "false"
+      EVENT_IGNORE_STATUS: "true"
+
+      # QR Code
+      QRCODE_MAX_COUNT: "5"
+
+    volumes:
+      - evolution_data:/app/dbdata
+      - evolution_logs:/app/logs
+    networks:
+      - evolution_network
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: evolution-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - evolution_network
+
+volumes:
+  evolution_data:
+    driver: local
+  evolution_logs:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  evolution_network:
+    driver: bridge

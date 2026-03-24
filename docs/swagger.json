@@ -1,0 +1,3273 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Evolution GO - whatsmeow",
+        "title": "Evolution GO",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/chat/archive": {
+            "post": {
+                "description": "Archive a chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Archive a chat",
+                "parameters": [
+                    {
+                        "description": "Chat",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/mute": {
+            "post": {
+                "description": "Mute a chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Mute a chat",
+                "parameters": [
+                    {
+                        "description": "Chat",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/pin": {
+            "post": {
+                "description": "Pin a chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Pin a chat",
+                "parameters": [
+                    {
+                        "description": "Chat",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/unpin": {
+            "post": {
+                "description": "Unpin a chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Unpin a chat",
+                "parameters": [
+                    {
+                        "description": "Chat",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/community/add": {
+            "post": {
+                "description": "Add participant to community",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Community"
+                ],
+                "summary": "Add participant to community",
+                "parameters": [
+                    {
+                        "description": "Participant data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_community_service.AddParticipantStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/community/create": {
+            "post": {
+                "description": "Create community",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Community"
+                ],
+                "summary": "Create community",
+                "parameters": [
+                    {
+                        "description": "Community data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_community_service.CreateCommunityStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/community/remove": {
+            "post": {
+                "description": "Remove participant from community",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Community"
+                ],
+                "summary": "Remove participant from community",
+                "parameters": [
+                    {
+                        "description": "Participant data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_community_service.AddParticipantStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/create": {
+            "post": {
+                "description": "Create group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Create group",
+                "parameters": [
+                    {
+                        "description": "Group data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.CreateGroupStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/info": {
+            "post": {
+                "description": "Get group info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Get group info",
+                "parameters": [
+                    {
+                        "description": "Group data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.GetGroupInfoStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/invitelink": {
+            "post": {
+                "description": "Get group invite link",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Get group invite link",
+                "parameters": [
+                    {
+                        "description": "Group data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.GetGroupInviteLinkStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/join": {
+            "post": {
+                "description": "Join group link",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Join group link",
+                "parameters": [
+                    {
+                        "description": "Group data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.JoinGroupStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/list": {
+            "get": {
+                "description": "List groups",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "List groups",
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/myall": {
+            "get": {
+                "description": "Get my groups",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Get my groups",
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/name": {
+            "post": {
+                "description": "Set group name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Set group name",
+                "parameters": [
+                    {
+                        "description": "Group data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.SetGroupNameStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/participant": {
+            "post": {
+                "description": "Update participant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Update participant",
+                "parameters": [
+                    {
+                        "description": "Group data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.AddParticipantStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/group/photo": {
+            "post": {
+                "description": "Set group photo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Set group photo",
+                "parameters": [
+                    {
+                        "description": "Group data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_group_service.SetGroupPhotoStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/all": {
+            "get": {
+                "description": "Get all instances",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Get all instances",
+                "responses": {
+                    "200": {
+                        "description": "All instances",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/connect": {
+            "post": {
+                "description": "Connect to instance with the provided data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Connect to instance",
+                "parameters": [
+                    {
+                        "description": "Instance data",
+                        "name": "instance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_instance_service.ConnectStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Instance connected successfully",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/create": {
+            "post": {
+                "description": "Creates a new instance with the provided data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Create a new instance",
+                "parameters": [
+                    {
+                        "description": "Instance data",
+                        "name": "instance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_instance_service.CreateStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Instance created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/delete/{instanceId}": {
+            "delete": {
+                "description": "Delete instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Delete instance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance Id",
+                        "name": "instanceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Instance deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/disconnect": {
+            "post": {
+                "description": "Disconnect from instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Disconnect from instance",
+                "responses": {
+                    "200": {
+                        "description": "Instance disconnected successfully",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/logout": {
+            "delete": {
+                "description": "Logout from instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Logout from instance",
+                "responses": {
+                    "200": {
+                        "description": "Instance logged out successfully",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/pair": {
+            "post": {
+                "description": "Request pairing code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Request pairing code",
+                "parameters": [
+                    {
+                        "description": "Instance data",
+                        "name": "instance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_instance_service.PairStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pairing code",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/proxy/{instanceId}": {
+            "delete": {
+                "description": "Delete proxy",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Delete proxy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance id",
+                        "name": "instanceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proxy deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/qr": {
+            "get": {
+                "description": "Get instance QR code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Get instance QR code",
+                "responses": {
+                    "200": {
+                        "description": "Instance QR code",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/instance/status": {
+            "get": {
+                "description": "Get instance status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Instance"
+                ],
+                "summary": "Get instance status",
+                "responses": {
+                    "200": {
+                        "description": "Instance status",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/label/chat": {
+            "post": {
+                "description": "Add label to chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Label"
+                ],
+                "summary": "Add label to chat",
+                "parameters": [
+                    {
+                        "description": "Label data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.ChatLabelStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/label/edit": {
+            "post": {
+                "description": "Edit label",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Label"
+                ],
+                "summary": "Edit label",
+                "parameters": [
+                    {
+                        "description": "Label data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.EditLabelStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/label/message": {
+            "post": {
+                "description": "Add label to message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Label"
+                ],
+                "summary": "Add label to message",
+                "parameters": [
+                    {
+                        "description": "Label data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.MessageLabelStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/message/delete": {
+            "post": {
+                "description": "Delete a message for everyone",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Delete a message for everyone",
+                "parameters": [
+                    {
+                        "description": "Delete a message for everyone",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.MessageStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/message/downloadimage": {
+            "post": {
+                "description": "Download an image",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Download an image",
+                "parameters": [
+                    {
+                        "description": "Download an image",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.DownloadImageStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/message/edit": {
+            "post": {
+                "description": "Edit a message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Edit a message",
+                "parameters": [
+                    {
+                        "description": "Edit a message",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.EditMessageStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/message/markread": {
+            "post": {
+                "description": "Mark a message as read",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Mark a message as read",
+                "parameters": [
+                    {
+                        "description": "Mark a message as read",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.MarkReadStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/message/presence": {
+            "post": {
+                "description": "Set chat presence",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Set chat presence",
+                "parameters": [
+                    {
+                        "description": "Set chat presence",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.ChatPresenceStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/message/react": {
+            "post": {
+                "description": "React a message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "React a message",
+                "parameters": [
+                    {
+                        "description": "React a message",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.ReactStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/message/status": {
+            "post": {
+                "description": "Get message status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Get message status",
+                "parameters": [
+                    {
+                        "description": "Get message status",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_message_service.MessageStatusStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/newsletter/create": {
+            "post": {
+                "description": "Create newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Create newsletter",
+                "parameters": [
+                    {
+                        "description": "Newsletter data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.CreateNewsletterStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/newsletter/info": {
+            "post": {
+                "description": "Get newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Get newsletter",
+                "parameters": [
+                    {
+                        "description": "Newsletter data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/newsletter/link": {
+            "post": {
+                "description": "Get newsletter invite",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Get newsletter invite",
+                "parameters": [
+                    {
+                        "description": "Newsletter data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterInviteStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/newsletter/list": {
+            "get": {
+                "description": "List newsletters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "List newsletters",
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/newsletter/messages": {
+            "post": {
+                "description": "Get newsletter messages",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Get newsletter messages",
+                "parameters": [
+                    {
+                        "description": "Newsletter data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterMessagesStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/newsletter/subscribe": {
+            "post": {
+                "description": "Subscribe newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Subscribe newsletter",
+                "parameters": [
+                    {
+                        "description": "Newsletter data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/send/contact": {
+            "post": {
+                "description": "Send a contact message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Send Message"
+                ],
+                "summary": "Send a contact message",
+                "parameters": [
+                    {
+                        "description": "Message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.ContactStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/send/link": {
+            "post": {
+                "description": "Send a link message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Send Message"
+                ],
+                "summary": "Send a link message",
+                "parameters": [
+                    {
+                        "description": "Message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.LinkStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/send/location": {
+            "post": {
+                "description": "Send a location message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Send Message"
+                ],
+                "summary": "Send a location message",
+                "parameters": [
+                    {
+                        "description": "Message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.LocationStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/send/media": {
+            "post": {
+                "description": "Send a media message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Send Message"
+                ],
+                "summary": "Send a media message",
+                "parameters": [
+                    {
+                        "description": "Message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.MediaStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/send/poll": {
+            "post": {
+                "description": "Send a poll message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Send Message"
+                ],
+                "summary": "Send a poll message",
+                "parameters": [
+                    {
+                        "description": "Message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.PollStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/send/sticker": {
+            "post": {
+                "description": "Send a sticker message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Send Message"
+                ],
+                "summary": "Send a sticker message",
+                "parameters": [
+                    {
+                        "description": "Message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.StickerStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/send/text": {
+            "post": {
+                "description": "Send a text message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Send Message"
+                ],
+                "summary": "Send a text message",
+                "parameters": [
+                    {
+                        "description": "Message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.TextStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/unlabel/chat": {
+            "post": {
+                "description": "Remove label from chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Label"
+                ],
+                "summary": "Remove label from chat",
+                "parameters": [
+                    {
+                        "description": "Label data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.ChatLabelStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/unlabel/message": {
+            "post": {
+                "description": "Remove label from message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Label"
+                ],
+                "summary": "Remove label from message",
+                "parameters": [
+                    {
+                        "description": "Label data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_label_service.MessageLabelStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/avatar": {
+            "post": {
+                "description": "Get a user's avatar",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get a user's avatar",
+                "parameters": [
+                    {
+                        "description": "Avatar data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.GetAvatarStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/block": {
+            "post": {
+                "description": "Block a contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Block a contact",
+                "parameters": [
+                    {
+                        "description": "Block data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.BlockStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/blocklist": {
+            "get": {
+                "description": "Get a user's block list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get a user's block list",
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/check": {
+            "post": {
+                "description": "Check a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Check a user",
+                "parameters": [
+                    {
+                        "description": "User data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.CheckUserStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/contacts": {
+            "get": {
+                "description": "Get a user's contacts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get a user's contacts",
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/info": {
+            "post": {
+                "description": "Get a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get a user",
+                "parameters": [
+                    {
+                        "description": "User data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.CheckUserStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/privacy": {
+            "get": {
+                "description": "Get a user's privacy settings",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get a user's privacy settings",
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/profile": {
+            "post": {
+                "description": "Set a user's profile picture",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Set a user's profile picture",
+                "parameters": [
+                    {
+                        "description": "Profile picture data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.SetProfilePictureStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/unblock": {
+            "post": {
+                "description": "Unblock a contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Unblock a contact",
+                "parameters": [
+                    {
+                        "description": "Block data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_user_service.BlockStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Error on validation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "gin.H": {
+            "type": "object",
+            "additionalProperties": {}
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_chat_service.BodyStruct": {
+            "type": "object",
+            "properties": {
+                "chat": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_community_service.AddParticipantStruct": {
+            "type": "object",
+            "properties": {
+                "communityJid": {
+                    "type": "string"
+                },
+                "groupJid": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_community_service.CreateCommunityStruct": {
+            "type": "object",
+            "properties": {
+                "communityName": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_group_service.AddParticipantStruct": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "$ref": "#/definitions/whatsmeow.ParticipantChange"
+                },
+                "groupJid": {
+                    "$ref": "#/definitions/types.JID"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_group_service.CreateGroupStruct": {
+            "type": "object",
+            "properties": {
+                "groupName": {
+                    "type": "string"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_group_service.GetGroupInfoStruct": {
+            "type": "object",
+            "properties": {
+                "groupJid": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_group_service.GetGroupInviteLinkStruct": {
+            "type": "object",
+            "properties": {
+                "groupJid": {
+                    "type": "string"
+                },
+                "reset": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_group_service.JoinGroupStruct": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_group_service.SetGroupNameStruct": {
+            "type": "object",
+            "properties": {
+                "groupJid": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_group_service.SetGroupPhotoStruct": {
+            "type": "object",
+            "properties": {
+                "groupJid": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_instance_service.ConnectStruct": {
+            "type": "object",
+            "properties": {
+                "immediate": {
+                    "type": "boolean"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "subscribe": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "webhookUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_instance_service.CreateStruct": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "proxy": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_instance_service.ProxyConfig"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_instance_service.PairStruct": {
+            "type": "object",
+            "properties": {
+                "phone": {
+                    "type": "string"
+                },
+                "subscribe": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_instance_service.ProxyConfig": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_label_service.ChatLabelStruct": {
+            "type": "object",
+            "properties": {
+                "jid": {
+                    "type": "string"
+                },
+                "labelId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_label_service.EditLabelStruct": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "integer"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "labelId": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_label_service.MessageLabelStruct": {
+            "type": "object",
+            "properties": {
+                "jid": {
+                    "type": "string"
+                },
+                "labelId": {
+                    "type": "string"
+                },
+                "messageId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_message_service.ChatPresenceStruct": {
+            "type": "object",
+            "properties": {
+                "isAudio": {
+                    "type": "boolean"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_message_service.DownloadImageStruct": {
+            "type": "object",
+            "properties": {
+                "directPath": {
+                    "type": "string"
+                },
+                "fileEncSHA256": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "fileLength": {
+                    "type": "integer"
+                },
+                "fileSHA256": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "mediaKey": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "mimetype": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_message_service.EditMessageStruct": {
+            "type": "object",
+            "properties": {
+                "chat": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "messageId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_message_service.MarkReadStruct": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "number": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_message_service.MessageStatusStruct": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_message_service.MessageStruct": {
+            "type": "object",
+            "properties": {
+                "chat": {
+                    "type": "string"
+                },
+                "messageId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_message_service.ReactStruct": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "reaction": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_newsletter_service.CreateNewsletterStruct": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterInviteStruct": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterMessagesStruct": {
+            "type": "object",
+            "properties": {
+                "before_id": {
+                    "type": "integer"
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "jid": {
+                    "$ref": "#/definitions/types.JID"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_newsletter_service.GetNewsletterStruct": {
+            "type": "object",
+            "properties": {
+                "jid": {
+                    "$ref": "#/definitions/types.JID"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.ContactStruct": {
+            "type": "object",
+            "properties": {
+                "delay": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mentionAll": {
+                    "type": "boolean"
+                },
+                "mentionedJid": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "quoted": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct"
+                },
+                "vcard": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_utils.VCardStruct"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.LinkStruct": {
+            "type": "object",
+            "properties": {
+                "delay": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "imgUrl": {
+                    "type": "string"
+                },
+                "mentionAll": {
+                    "type": "boolean"
+                },
+                "mentionedJid": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "quoted": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.LocationStruct": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "delay": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "mentionAll": {
+                    "type": "boolean"
+                },
+                "mentionedJid": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "quoted": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.MediaStruct": {
+            "type": "object",
+            "properties": {
+                "caption": {
+                    "type": "string"
+                },
+                "delay": {
+                    "type": "integer"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mentionAll": {
+                    "type": "boolean"
+                },
+                "mentionedJid": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "quoted": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.PollStruct": {
+            "type": "object",
+            "properties": {
+                "delay": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "maxAnswer": {
+                    "type": "integer"
+                },
+                "mentionAll": {
+                    "type": "boolean"
+                },
+                "mentionedJid": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "question": {
+                    "type": "string"
+                },
+                "quoted": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct": {
+            "type": "object",
+            "properties": {
+                "messageId": {
+                    "type": "string"
+                },
+                "participant": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.StickerStruct": {
+            "type": "object",
+            "properties": {
+                "delay": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mentionAll": {
+                    "type": "boolean"
+                },
+                "mentionedJid": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "quoted": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct"
+                },
+                "sticker": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.TextStruct": {
+            "type": "object",
+            "properties": {
+                "delay": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mentionAll": {
+                    "type": "boolean"
+                },
+                "mentionedJid": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "string"
+                },
+                "quoted": {
+                    "$ref": "#/definitions/github_com_Zapbox-API_evolution-go_pkg_sendMessage_service.QuotedStruct"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_user_service.BlockStruct": {
+            "type": "object",
+            "properties": {
+                "number": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_user_service.CheckUserStruct": {
+            "type": "object",
+            "properties": {
+                "number": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_user_service.GetAvatarStruct": {
+            "type": "object",
+            "properties": {
+                "number": {
+                    "type": "string"
+                },
+                "preview": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_user_service.SetProfilePictureStruct": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Zapbox-API_evolution-go_pkg_utils.VCardStruct": {
+            "type": "object",
+            "properties": {
+                "fullName": {
+                    "type": "string"
+                },
+                "organization": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.JID": {
+            "type": "object",
+            "properties": {
+                "device": {
+                    "type": "integer"
+                },
+                "integrator": {
+                    "type": "integer"
+                },
+                "rawAgent": {
+                    "type": "integer"
+                },
+                "server": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "whatsmeow.ParticipantChange": {
+            "type": "string",
+            "enum": [
+                "add",
+                "remove",
+                "promote",
+                "demote"
+            ],
+            "x-enum-varnames": [
+                "ParticipantChangeAdd",
+                "ParticipantChangeRemove",
+                "ParticipantChangePromote",
+                "ParticipantChangeDemote"
+            ]
+        }
+    }
+}
