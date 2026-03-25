@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - develop
 
 jobs:
   sync:
@@ -34,9 +35,15 @@ jobs:
       - name: Set release target
         id: target
         run: |
-          echo "repo=EvolutionAPI/evolution-go" >> $GITHUB_OUTPUT
-          echo "dir=dist/release" >> $GITHUB_OUTPUT
-          echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "repo=EvolutionAPI/evolution-go" >> $GITHUB_OUTPUT
+            echo "dir=dist/release" >> $GITHUB_OUTPUT
+            echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+          else
+            echo "repo=EvolutionAPI/evolution-go-beta" >> $GITHUB_OUTPUT
+            echo "dir=dist/beta" >> $GITHUB_OUTPUT
+            echo "version=$(cat VERSION)-beta" >> $GITHUB_OUTPUT
+          fi
 
       - name: Clone target repo
         run: |
@@ -106,10 +113,13 @@ jobs:
       - name: Setup whatsmeow-lib
         run: |
           cd ${{ steps.target.outputs.dir }}
+          git rm -rf whatsmeow-lib 2>/dev/null || true
           rm -rf whatsmeow-lib .gitmodules
-          git rm -r --cached whatsmeow-lib 2>/dev/null || true
-          git submodule add https://github.com/EvolutionAPI/whatsmeow.git whatsmeow-lib
-          git submodule update --init --recursive
+          printf '[submodule "whatsmeow-lib"]\n\tpath = whatsmeow-lib\n\turl = https://github.com/EvolutionAPI/whatsmeow.git\n' > .gitmodules
+          git add .gitmodules
+          git clone https://github.com/EvolutionAPI/whatsmeow.git whatsmeow-lib
+          git submodule init
+          git submodule update
 
       - name: Clean artifacts
         run: |
