@@ -69,7 +69,7 @@ jobs:
           TARGET="${{ steps.target.outputs.dir }}"
 
           # Root files
-          for f in README.md LICENSE CHANGELOG.md COMMANDS.md .env.example .dockerignore Dockerfile Makefile; do
+          for f in README.md LICENSE NOTICE TRADEMARKS.md CHANGELOG.md COMMANDS.md .env.example .dockerignore Dockerfile Makefile; do
             [ -f "$f" ] && cp "$f" "$TARGET/"
           done
 

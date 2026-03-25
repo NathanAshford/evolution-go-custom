@@ -70,7 +70,7 @@ cd "$ROOT_DIR"
 # ── 3. Copy files ──
 echo "[3/7] Copying files..."
 
-for f in README.md LICENSE CHANGELOG.md COMMANDS.md \
+for f in README.md LICENSE NOTICE TRADEMARKS.md CHANGELOG.md COMMANDS.md \
          .env.example .dockerignore Dockerfile Makefile; do
     [ -f "$ROOT_DIR/$f" ] && cp "$ROOT_DIR/$f" "$BETA_DIR/"
 done
