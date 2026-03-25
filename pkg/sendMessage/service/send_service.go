@@ -620,6 +620,7 @@ func (s *sendService) sendLinkWithRetry(data *LinkStruct, instance *instance_mod
 			fileData, _ = io.ReadAll(resp.Body)
 		}
 
+		previewType := waE2E.ExtendedTextMessage_VIDEO
 		msg := &waE2E.Message{
 			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 				Text:          &data.Text,
@@ -627,6 +628,7 @@ func (s *sendService) sendLinkWithRetry(data *LinkStruct, instance *instance_mod
 				MatchedText:   &matchedText,
 				JPEGThumbnail: fileData,
 				Description:   &data.Description,
+				PreviewType:   &previewType,
 			},
 		}
 

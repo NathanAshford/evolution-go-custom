@@ -68,14 +68,13 @@ import (
 
 var devMode = flag.Bool("dev", false, "Enable development mode")
 
-var version = "dev"
+var version = readVersion()
 
-func init() {
-	if version == "dev" {
-		if v, err := os.ReadFile("VERSION"); err == nil {
-			version = strings.TrimSpace(string(v))
-		}
+func readVersion() string {
+	if v, err := os.ReadFile("VERSION"); err == nil {
+		return strings.TrimSpace(string(v))
 	}
+	return "0.0.0"
 }
 
 func setupRouter(db *gorm.DB, authDB *sql.DB, sqliteDB *sql.DB, config *config.Config, conn *amqp.Connection, exPath string, runtimeCtx *core.RuntimeContext) *gin.Engine {
