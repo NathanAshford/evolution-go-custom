@@ -112,21 +112,43 @@ func InitializeRuntime(tier, version, globalApiKey string) *RuntimeContext {
 				fmt.Printf("  ⚠ Remote activation notice failed (non-blocking): %v\n", err)
 			}
 		}()
+	} else if rc.globalApiKey != "" {
+		// No license in DB but GLOBAL_API_KEY is set — try activating directly
+		fmt.Println("  No license in DB. Checking GLOBAL_API_KEY with licensing server...")
+		rc.apiKey = rc.globalApiKey
+		if err := activateInstance(rc, version); err == nil {
+			// GLOBAL_API_KEY is valid — save to DB and activate
+			saveRuntimeData(&RuntimeData{APIKey: rc.globalApiKey, Tier: tier})
+			rc.ctxHash = sha256.Sum256([]byte(rc.apiKey + rc.instanceID))
+			rc.active.Store(true)
+			ActivateIntegrity(rc)
+			fmt.Printf("  ✓ GLOBAL_API_KEY is valid — license saved and activated\n")
+		} else {
+			// GLOBAL_API_KEY not valid on licensing server — need registration
+			rc.apiKey = ""
+			fmt.Printf("  ⚠ GLOBAL_API_KEY not recognized by licensing server: %v\n", err)
+			printRegistrationBanner()
+			rc.active.Store(false)
+		}
 	} else {
-		// No license — server starts but API is blocked
-		fmt.Println()
-		fmt.Println("  ╔══════════════════════════════════════════════════════════╗")
-		fmt.Println("  ║              License Registration Required               ║")
-		fmt.Println("  ╚══════════════════════════════════════════════════════════╝")
-		fmt.Println()
-		fmt.Println("  Server starting without license.")
-		fmt.Println("  API endpoints will return 503 until license is activated.")
-		fmt.Println("  Use GET /license/register to get the registration URL.")
-		fmt.Println()
+		// No license and no GLOBAL_API_KEY
+		printRegistrationBanner()
 		rc.active.Store(false)
 	}
 
 	return rc
+}
+
+func printRegistrationBanner() {
+	fmt.Println()
+	fmt.Println("  ╔══════════════════════════════════════════════════════════╗")
+	fmt.Println("  ║              License Registration Required               ║")
+	fmt.Println("  ╚══════════════════════════════════════════════════════════╝")
+	fmt.Println()
+	fmt.Println("  Server starting without license.")
+	fmt.Println("  API endpoints will return 503 until license is activated.")
+	fmt.Println("  Use GET /license/register to get the registration URL.")
+	fmt.Println()
 }
 
 // completeActivation finalizes the activation after registration callback.
