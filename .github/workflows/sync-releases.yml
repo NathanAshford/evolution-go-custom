@@ -46,14 +46,21 @@ jobs:
 
       - name: Build manager
         run: |
-          if [ -d "../evolution-go-manager/src" ]; then
-            cd ../evolution-go-manager
-            pnpm install --frozen-lockfile
-            pnpm build
-            rm -rf ${{ github.workspace }}/manager/dist
-            mkdir -p ${{ github.workspace }}/manager/dist
-            cp -r dist/* ${{ github.workspace }}/manager/dist/
+          # Check inside repo first, then parent dir
+          if [ -d "evolution-go-manager/src" ]; then
+            MSRC="evolution-go-manager"
+          elif [ -d "../evolution-go-manager/src" ]; then
+            MSRC="../evolution-go-manager"
+          else
+            echo "Manager source not found, using existing manager/dist/"
+            exit 0
           fi
+          cd "$MSRC"
+          pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+          pnpm build
+          rm -rf ${{ github.workspace }}/manager/dist
+          mkdir -p ${{ github.workspace }}/manager/dist
+          cp -r dist/* ${{ github.workspace }}/manager/dist/
 
       - name: Copy files
         run: |
@@ -108,15 +115,10 @@ jobs:
       - name: Setup whatsmeow-lib
         run: |
           cd ${{ steps.target.outputs.dir }}
-          # Clone for build verification
-          if [ ! -d "whatsmeow-lib/.git" ]; then
-            rm -rf whatsmeow-lib
-            git clone https://github.com/EvolutionAPI/whatsmeow.git whatsmeow-lib
-          fi
-          # Register as submodule for the target repo
-          rm -rf whatsmeow-lib/.git
-          git submodule add https://github.com/EvolutionAPI/whatsmeow.git whatsmeow-lib 2>/dev/null || true
-          git submodule update --init --recursive 2>/dev/null || true
+          rm -rf whatsmeow-lib .gitmodules
+          git rm -r --cached whatsmeow-lib 2>/dev/null || true
+          git submodule add https://github.com/EvolutionAPI/whatsmeow.git whatsmeow-lib
+          git submodule update --init --recursive
 
       - name: Clean artifacts
         run: |
