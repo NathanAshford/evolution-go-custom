@@ -113,25 +113,22 @@ func InitializeRuntime(tier, version, globalApiKey string) *RuntimeContext {
 			}
 		}()
 	} else if rc.globalApiKey != "" {
-		// No license in DB but GLOBAL_API_KEY is set — try activating directly
-		fmt.Println("  No license in DB. Checking GLOBAL_API_KEY with licensing server...")
+		// No license in DB but GLOBAL_API_KEY is set — try using it as api_key
 		rc.apiKey = rc.globalApiKey
 		if err := activateInstance(rc, version); err == nil {
-			// GLOBAL_API_KEY is valid — save to DB and activate
+			// GLOBAL_API_KEY is a valid api_key — save to DB and activate
 			saveRuntimeData(&RuntimeData{APIKey: rc.globalApiKey, Tier: tier})
 			rc.ctxHash = sha256.Sum256([]byte(rc.apiKey + rc.instanceID))
 			rc.active.Store(true)
 			ActivateIntegrity(rc)
-			fmt.Printf("  ✓ GLOBAL_API_KEY is valid — license saved and activated\n")
+			fmt.Printf("  ✓ GLOBAL_API_KEY accepted — license saved and activated\n")
 		} else {
-			// GLOBAL_API_KEY not valid on licensing server — need registration
+			// Not a valid api_key — no problem, just go to registration flow
 			rc.apiKey = ""
-			fmt.Printf("  ⚠ GLOBAL_API_KEY not recognized by licensing server: %v\n", err)
 			printRegistrationBanner()
 			rc.active.Store(false)
 		}
 	} else {
-		// No license and no GLOBAL_API_KEY
 		printRegistrationBanner()
 		rc.active.Store(false)
 	}
@@ -226,11 +223,15 @@ func GateMiddleware(rc *RuntimeContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
-		// Always pass through: health, license routes, frontend (manager/assets/static), swagger, favicon, ws
+		// Always pass through: health, license routes, frontend, static assets, swagger, ws
 		if path == "/health" || path == "/server/ok" || path == "/favicon.ico" ||
 			path == "/license/status" || path == "/license/register" || path == "/license/activate" ||
 			strings.HasPrefix(path, "/manager") || strings.HasPrefix(path, "/assets") ||
-			strings.HasPrefix(path, "/swagger") || path == "/ws" {
+			strings.HasPrefix(path, "/swagger") || path == "/ws" ||
+			strings.HasSuffix(path, ".svg") || strings.HasSuffix(path, ".css") ||
+			strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".png") ||
+			strings.HasSuffix(path, ".ico") || strings.HasSuffix(path, ".woff2") ||
+			strings.HasSuffix(path, ".woff") || strings.HasSuffix(path, ".ttf") {
 			c.Next()
 			return
 		}

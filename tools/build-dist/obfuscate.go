@@ -207,8 +207,20 @@ func main() {
 	sort.Slice(keys, func(i, j int) bool { return len(keys[i]) > len(keys[j]) })
 
 	for _, k := range keys {
-		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(k) + `\b`)
-		merged = re.ReplaceAllString(merged, nameMap[k])
+		// Only replace identifiers NOT inside string literals (quoted with ")
+		// Match: word boundary + name + word boundary, but NOT preceded by " or followed by "
+		re := regexp.MustCompile(`(?:^|[^"])(\b` + regexp.QuoteMeta(k) + `\b)(?:[^"]|$)`)
+		merged = re.ReplaceAllStringFunc(merged, func(match string) string {
+			// Check if the match is inside a quoted string by looking at context
+			return strings.Replace(match, k, nameMap[k], 1)
+		})
+	}
+
+	// Fix: restore any map keys that were incorrectly obfuscated inside string literals
+	// Re-scan for patterns like `"_xyz":` and restore to original if it was a JSON/map key
+	for orig, obf := range nameMap {
+		// Restore obfuscated names inside string literals: "_xyz" → "original"
+		merged = strings.ReplaceAll(merged, `"`+obf+`"`, `"`+orig+`"`)
 	}
 
 	// Replace XOR key/encoded URL literals in the merged code
