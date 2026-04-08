@@ -1,6 +1,7 @@
 package send_handler
 
 import (
+	"encoding/base64"
 	"io"
 	"net/http"
 	"strconv"
@@ -235,10 +236,26 @@ func (s *sendHandler) SendMedia(ctx *gin.Context) {
 			return
 		}
 
-		message, err := s.sendMessageService.SendMediaUrl(data, instance)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+		var message *send_service.MessageSendStruct
+
+		if !strings.HasPrefix(data.Url, "http://") && !strings.HasPrefix(data.Url, "https://") {
+			// Treat as base64-encoded media
+			fileBytes, err := base64.StdEncoding.DecodeString(data.Url)
+			if err != nil {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid base64 encoding"})
+				return
+			}
+			message, err = s.sendMessageService.SendMediaFile(data, fileBytes, instance)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		} else {
+			message, err = s.sendMessageService.SendMediaUrl(data, instance)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{"message": "success", "data": message})
