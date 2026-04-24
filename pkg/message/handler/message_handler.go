@@ -174,7 +174,7 @@ func (m *messageHandler) MarkRead(ctx *gin.Context) {
 // @Tags Message
 // @Accept json
 // @Produce json
-// @Param message body message_service.DownloadImageStruct true "Download an image"
+// @Param message body message_service.DownloadMediaStruct true "Download an image"
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"

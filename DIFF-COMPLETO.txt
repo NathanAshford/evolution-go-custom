@@ -1,0 +1,552 @@
+================================================================================
+ EVOLUTION GO - COMPARACAO COMPLETA: VERSAO ANTIGA vs VERSAO NOVA
+ Pasta antigo/ (antes) vs raiz/ (depois)
+ Data: 01/04/2026
+================================================================================
+
+INDICE
+------
+1. Resumo das Mudancas
+2. whatsmeow-lib/send.go
+3. pkg/sendMessage/service/send_service.go
+4. pkg/sendMessage/handler/send_handler.go
+5. pkg/routes/routes.go
+6. pkg/core/runtime.go
+7. pkg/whatsmeow/service/whatsmeow.go
+8. pkg/utils/utils.go
+9. pkg/internal/event_types/event_types.go
+
+================================================================================
+1. RESUMO DAS MUDANCAS
+================================================================================
+
+Total de arquivos modificados: 8 arquivos .go
+
+As mudancas se dividem em 4 areas funcionais:
+
+  A) CARROSSEL (NOVO)
+     - Endpoint /send/carousel criado do zero
+     - Handler, Service, Rota
+     - Geracao de thumbnails JPEG para auto-carregamento no iOS
+
+  B) CORRECOES iOS/Web para BOTOES e LISTAS
+     - SendButton: removido wrapper ViewOnceMessage
+     - SendList: reescrito de InteractiveMessage para ListMessage legado
+     - whatsmeow-lib: biz node corrigido para InteractiveMessage e ListMessage
+
+  C) RASTREIO DE CLIQUES (ButtonClick)
+     - Deteccao de 4 tipos de resposta de botao
+     - Evento ButtonClick disparado para webhook/websocket/rabbitmq/nats
+     - Novo tipo de evento BUTTON_CLICK registrado
+
+  D) TELEMETRIA
+     - Contador de mensagens recebidas adicionado ao heartbeat
+
+================================================================================
+2. whatsmeow-lib/send.go
+================================================================================
+
+Este arquivo e a BIBLIOTECA whatsmeow que serializa mensagens no protocolo
+binario do WhatsApp. As mudancas aqui sao CRITICAS para compatibilidade.
+
+--- MUDANCA A: getButtonType() - Adicionado case InteractiveMessage ---
+
+  ANTES (antigo):
+    Nao tinha case para InteractiveMessage.
+    Resultado: mensagens InteractiveMessage (carrossel/botoes) NAO geravam
+    biz node, e o WhatsApp Web/Desktop IGNORAVA a mensagem.
+
+  DEPOIS (novo):
+    case msg.InteractiveMessage != nil:
+        return "interactive"
+
+  IMPACTO: Sem isso, carrossel e botoes (sem ViewOnceMessage) nao aparecem
+  no WhatsApp Web/Desktop.
+
+--- MUDANCA B: getButtonAttributes() - Tipo da lista + InteractiveMessage ---
+
+  ANTES (antigo):
+    case msg.ListMessage != nil:
+        return waBinary.Attrs{
+            "v":    "2",
+            "type": strings.ToLower(waE2E.ListMessage_ListType_name[
+                int32(msg.ListMessage.GetListType())]),
+        }
+    // Para SINGLE_SELECT, gerava type="single_select"
+
+  DEPOIS (novo):
+    case msg.ListMessage != nil:
+        return waBinary.Attrs{
+            "v":    "2",
+            "type": "product_list",  // Fixo! Compativel iOS/Web
+        }
+    case msg.InteractiveMessage != nil:
+        return waBinary.Attrs{
+            "type": "native_flow",
+            "v":    "1",
+        }
+
+  IMPACTO: O WhatsApp espera type="product_list" para listas. Com
+  "single_select" a lista NAO aparece no iOS e Web.
+
+--- MUDANCA C: preparePeerMessageNode() - Biz node com child node ---
+
+  ANTES (antigo):
+    content = append(content, waBinary.Node{
+        Tag: "biz",
+        Content: []waBinary.Node{{
+            Tag:   buttonType,
+            Attrs: getButtonAttributes(message),
+        }},
+    })
+    // Biz node simples, sem child nodes
+
+  DEPOIS (novo):
+    bizContent := waBinary.Node{
+        Tag:   buttonType,
+        Attrs: getButtonAttributes(message),
+    }
+    if buttonType == "interactive" {
+        bizContent.Content = []waBinary.Node{
+            {
+                Tag: "native_flow",
+                Attrs: waBinary.Attrs{
+                    "v":    "9",
+                    "name": "mixed",
+                },
+            },
+        }
+    }
+    content = append(content, waBinary.Node{
+        Tag:     "biz",
+        Content: []waBinary.Node{bizContent},
+    })
+
+  IMPACTO: Para InteractiveMessage (carrossel/botoes), o biz node precisa
+  ter um child <native_flow v="9" name="mixed"/>. Sem isso, o WhatsApp
+  Web/Desktop nao renderiza a mensagem.
+
+  BIZ NODE RESULTANTE:
+    Para InteractiveMessage:
+      <biz>
+        <interactive type="native_flow" v="1">
+          <native_flow v="9" name="mixed"/>
+        </interactive>
+      </biz>
+
+    Para ListMessage:
+      <biz>
+        <list type="product_list" v="2"/>
+      </biz>
+
+================================================================================
+3. pkg/sendMessage/service/send_service.go
+================================================================================
+
+Este e o arquivo principal com a logica de envio de mensagens.
+
+--- MUDANCA A: Import adicionado ---
+
+  DEPOIS (novo):
+    import "image/jpeg"  // Para geracao de thumbnail do carrossel
+
+--- MUDANCA B: Interface SendService - Adicionado SendCarousel ---
+
+  ANTES (antigo):
+    type SendService interface {
+        SendText(...)
+        SendLink(...)
+        SendMedia(...)
+        SendPoll(...)
+        SendSticker(...)
+        SendLocation(...)
+        SendContact(...)
+        SendReaction(...)
+        SendButton(...)
+        SendList(...)
+    }
+
+  DEPOIS (novo):
+    type SendService interface {
+        ... (mesmos 10 metodos)
+        SendCarousel(...)  // NOVO
+    }
+
+--- MUDANCA C: SendButton - Removido ViewOnceMessage wrapper ---
+
+  ANTES (antigo):
+    // Construia InteractiveMessage normalmente, depois:
+    msg := &waE2E.Message{
+        ViewOnceMessage: &waE2E.FutureProofMessage{
+            Message: &waE2E.Message{
+                InteractiveMessage: interactiveMsg,
+            },
+        },
+    }
+    // Footer SEMPRE incluido (mesmo vazio)
+    // Header SEMPRE incluido
+
+  DEPOIS (novo):
+    // Construcao da InteractiveMessage com mudancas:
+    // 1. Adicionado MessageVersion: proto.Int32(1)
+    // 2. Adicionado ContextInfo: &waE2E.ContextInfo{}
+    // 3. Footer CONDICIONAL (so se nao vazio)
+    // 4. Header CONDICIONAL (so se titulo nao vazio)
+
+    // Mensagem DIRETA sem wrapper:
+    msg := &waE2E.Message{
+        InteractiveMessage: interactiveMsg,  // DIRETO, sem ViewOnceMessage!
+    }
+
+  IMPACTO: ViewOnceMessage impedia renderizacao no iOS e Web.
+  Footer vazio causava problemas no iOS.
+
+--- MUDANCA D: Structs de secao da lista ---
+
+  ANTES (antigo):
+    type row struct {
+        Header      *string  // Ponteiro
+        Title       string
+        Description *string  // Ponteiro
+        ID          string
+    }
+
+  DEPOIS (novo):
+    type row struct {
+        Header      string   // Valor direto
+        Title       string
+        Description string   // Valor direto
+        ID          string
+    }
+    type section struct {
+        Title          string
+        HighlightLabel string  // NOVO campo
+        Rows           []row
+    }
+    // Adicionados fallbacks:
+    // - Titulo vazio -> " " (espaco)
+    // - RowId vazio -> "row_0", "row_1", etc.
+    // - Header do row = Title do row
+
+--- MUDANCA E: SendList - REESCRITA COMPLETA ---
+
+  ANTES (antigo):
+    // Usava NativeFlowMessage com button "single_select"
+    // Serializava sections como JSON string
+    // Envolvia em ViewOnceMessage > FutureProofMessage > InteractiveMessage
+    // Fazia envio manual (clientPointer, messageId, etc.)
+
+    jsonSections := sectionsToString(data.Sections)
+    selectButton := &waE2E.InteractiveMessage_NativeFlowMessage_NativeFlowButton{
+        Name:             proto.String("single_select"),
+        ButtonParamsJSON: proto.String(jsonSections),
+    }
+    interactiveMsg := &waE2E.InteractiveMessage{
+        InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
+            NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
+                Buttons: []*waE2E.InteractiveMessage_NativeFlowMessage_NativeFlowButton{
+                    selectButton,
+                },
+            },
+        },
+        // ... body, footer, etc.
+    }
+    msg := &waE2E.Message{
+        ViewOnceMessage: &waE2E.FutureProofMessage{
+            Message: &waE2E.Message{
+                InteractiveMessage: interactiveMsg,
+            },
+        },
+    }
+    // Envio manual com clientPointer, messageId, etc.
+
+  DEPOIS (novo):
+    // Usa ListMessage LEGADO (protobuf nativo)
+    // Constroi sections e rows como structs proto
+    // NAO usa ViewOnceMessage
+    // Usa helper SendMessage() compartilhado
+
+    var sections []*waE2E.ListMessage_Section
+    for _, sec := range data.Sections {
+        var rows []*waE2E.ListMessage_Row
+        for _, r := range sec.Rows {
+            rows = append(rows, &waE2E.ListMessage_Row{
+                Title:       proto.String(r.Title),
+                Description: proto.String(r.Description),
+                RowID:       proto.String(r.RowId),
+            })
+        }
+        sections = append(sections, &waE2E.ListMessage_Section{
+            Title: proto.String(sec.Title),
+            Rows:  rows,
+        })
+    }
+
+    listType := waE2E.ListMessage_SINGLE_SELECT
+    listMessage := &waE2E.ListMessage{
+        Title:       proto.String(data.Title),
+        Description: proto.String(data.Description),
+        ButtonText:  proto.String(buttonText),
+        ListType:    &listType,
+        Sections:    sections,
+        FooterText:  proto.String(data.FooterText),
+    }
+
+    msg := &waE2E.Message{
+        ListMessage: listMessage,  // DIRETO, sem wrapper!
+    }
+    // Usa helper s.SendMessage(instance, msg, "ListMessage", ...)
+
+  IMPACTO: O formato InteractiveMessage/NativeFlowMessage para listas
+  SO FUNCIONA NO ANDROID. O formato legado ListMessage funciona em
+  TODOS os dispositivos (Android, iOS, Web).
+
+--- MUDANCA F: SendMessage helper - Novos cases para quoted messages ---
+
+  ANTES (antigo):
+    // Switch de messageType para setar ContextInfo em mensagens quoted
+    // Nao tinha cases para "InteractiveMessage" nem "ListMessage"
+
+  DEPOIS (novo):
+    case "InteractiveMessage":
+        msg.InteractiveMessage.ContextInfo = contextInfo
+    case "ListMessage":
+        msg.ListMessage.ContextInfo = contextInfo
+
+  IMPACTO: Permite responder (quote) mensagens com botoes e listas.
+
+--- MUDANCA G: SendCarousel - NOVO (funcao inteira) ---
+
+  ANTES (antigo):
+    Nao existia.
+
+  DEPOIS (novo):
+    func (s *sendMessageService) SendCarousel(data SendCarouselStruct, ...) {
+        // Para cada card:
+        // 1. Baixa imagem da URL
+        // 2. Faz upload para CDN do WhatsApp
+        // 3. Gera thumbnail JPEG (72px, qualidade 50)
+        // 4. Constroi InteractiveMessage com Header (ImageMessage + thumbnail)
+        // 5. Adiciona Body, Footer, Buttons (NativeFlowMessage)
+        // Monta CarouselMessage com todos os cards
+        // Envia como InteractiveMessage (sem ViewOnceMessage)
+    }
+
+  THUMBNAIL (novo - nao existia):
+    // Redimensiona imagem para 72px de largura
+    // Codifica como JPEG qualidade 50
+    // Insere no campo JpegThumbnail do ImageMessage
+    // SEM thumbnail: usuario precisa clicar para carregar imagem
+    // COM thumbnail: imagem carrega automaticamente
+
+  CARDS SEM MessageParamsJSON e MessageVersion (novo):
+    // ANTES: cada card tinha MessageParamsJSON e MessageVersion
+    // DEPOIS: removidos para compatibilidade iOS
+
+  SEM CarouselCardType (novo):
+    // ANTES: CarouselCardType: HSCROLL_CARDS
+    // DEPOIS: campo removido para compatibilidade iOS
+
+================================================================================
+4. pkg/sendMessage/handler/send_handler.go
+================================================================================
+
+--- MUDANCA: Adicionado SendCarousel ao interface e implementacao ---
+
+  ANTES (antigo):
+    type SendHandler interface {
+        SendText(ctx *gin.Context)
+        SendLink(ctx *gin.Context)
+        SendMedia(ctx *gin.Context)
+        SendPoll(ctx *gin.Context)
+        SendSticker(ctx *gin.Context)
+        SendLocation(ctx *gin.Context)
+        SendContact(ctx *gin.Context)
+        SendButton(ctx *gin.Context)
+        SendList(ctx *gin.Context)
+    }
+
+  DEPOIS (novo):
+    type SendHandler interface {
+        ... (mesmos 9 metodos)
+        SendCarousel(ctx *gin.Context)  // NOVO
+    }
+
+    // Nova funcao handler:
+    func (s *sendHandler) SendCarousel(ctx *gin.Context) {
+        // Extrai instancia do contexto
+        // Faz bind do JSON body para SendCarouselStruct
+        // Valida campos obrigatorios: Number e Cards (min 1)
+        // Chama s.sendMessageService.SendCarousel(data, instance)
+        // Retorna resultado
+    }
+
+================================================================================
+5. pkg/routes/routes.go
+================================================================================
+
+--- MUDANCA: Adicionada rota /send/carousel ---
+
+  ANTES (antigo):
+    sendRoutes := routes.Group("/send")
+    {
+        // ... outras rotas ...
+        routes.POST("/button", ...)
+        routes.POST("/list", ...)
+    }
+
+  DEPOIS (novo):
+    sendRoutes := routes.Group("/send")
+    {
+        // ... outras rotas ...
+        routes.POST("/button", ...)
+        routes.POST("/list", ...)
+        routes.POST("/carousel", r.jidValidationMiddleware.
+            ValidateNumberFieldWithFormatJid(), r.sendHandler.SendCarousel)
+    }
+
+================================================================================
+6. pkg/core/runtime.go
+================================================================================
+
+--- MUDANCA: Telemetria de mensagens recebidas ---
+
+  ANTES (antigo):
+    type RuntimeContext struct {
+        // ...
+        msgSent atomic.Int64
+    }
+    // Apenas TrackMessageSent()
+    // Heartbeat so enviava messages_sent
+
+  DEPOIS (novo):
+    type RuntimeContext struct {
+        // ...
+        msgSent atomic.Int64
+        msgRecv atomic.Int64  // NOVO
+    }
+
+    func TrackMessageRecv() {  // NOVO
+        runtime.msgRecv.Add(1)
+    }
+
+    // Heartbeat agora envia messages_sent E messages_recv
+    // Ambos contadores resetados apos envio
+    // Ambos re-adicionados em caso de falha
+
+================================================================================
+7. pkg/whatsmeow/service/whatsmeow.go
+================================================================================
+
+--- MUDANCA A: Deteccao de cliques em botoes (~90 linhas adicionadas) ---
+
+  ANTES (antigo):
+    Nao detectava cliques em botoes.
+
+  DEPOIS (novo):
+    // Dentro do handler de eventos *events.Message:
+
+    // 1. Legacy ButtonsResponseMessage
+    if resp := evt.Message.GetButtonsResponseMessage(); resp != nil {
+        buttonId = resp.GetSelectedButtonID()
+        buttonText = resp.GetSelectedDisplayText()
+        responseType = "buttons_response"
+    }
+
+    // 2. NativeFlow InteractiveResponseMessage
+    if resp := evt.Message.GetInteractiveResponseMessage(); resp != nil {
+        if nf := resp.GetNativeFlowResponseMessage(); nf != nil {
+            // Parse ParamsJSON para extrair id e display_text
+            responseType = "native_flow_response"
+        }
+    }
+
+    // 3. TemplateButtonReplyMessage
+    if resp := evt.Message.GetTemplateButtonReplyMessage(); resp != nil {
+        buttonId = resp.GetSelectedID()
+        buttonText = resp.GetSelectedDisplayText()
+        responseType = "template_button_reply"
+    }
+
+    // 4. ListResponseMessage
+    if resp := evt.Message.GetListResponseMessage(); resp != nil {
+        buttonId = resp.GetSingleSelectReply().GetSelectedRowID()
+        buttonText = resp.GetTitle()
+        responseType = "list_response"
+    }
+
+    // Monta payload ButtonClick e dispara:
+    // - CallWebhook com queue "{userId}.buttonclick"
+    // - SendToGlobalQueues("ButtonClick", ...)
+
+--- MUDANCA B: Roteamento do evento ButtonClick ---
+
+  ANTES (antigo):
+    // Sem case para ButtonClick no switch de eventos
+
+  DEPOIS (novo):
+    case "ButtonClick":
+        // Dispara se instancia tem BUTTON_CLICK ou MESSAGE nos events
+
+================================================================================
+8. pkg/utils/utils.go
+================================================================================
+
+--- MUDANCA: Deteccao de tipo InteractiveResponseMessage ---
+
+  ANTES (antigo):
+    // Sem case para InteractiveResponseMessage
+
+  DEPOIS (novo):
+    case waMsg.GetInteractiveResponseMessage() != nil:
+        return "interactive response"
+
+================================================================================
+9. pkg/internal/event_types/event_types.go
+================================================================================
+
+--- MUDANCA: Novo tipo de evento BUTTON_CLICK ---
+
+  ANTES (antigo):
+    // Constantes de eventos: MESSAGE, MESSAGE_DELETE, MESSAGE_UPDATE, etc.
+    // Sem BUTTON_CLICK
+
+  DEPOIS (novo):
+    const BUTTON_CLICK = "BUTTON_CLICK"
+
+    // Adicionado ao slice AllEvents:
+    AllEvents = []string{ ..., BUTTON_CLICK }
+
+    // Adicionado ao mapa de validacao:
+    validEventTypes = map[string]bool{ ..., BUTTON_CLICK: true }
+
+================================================================================
+RESUMO FINAL
+================================================================================
+
+  ARQUIVO                                         | LINHAS ADICIONADAS (aprox)
+  ------------------------------------------------|-------------------------
+  whatsmeow-lib/send.go                           | ~30
+  pkg/sendMessage/service/send_service.go          | ~200
+  pkg/sendMessage/handler/send_handler.go          | ~50
+  pkg/routes/routes.go                             | ~2
+  pkg/core/runtime.go                              | ~15
+  pkg/whatsmeow/service/whatsmeow.go               | ~90
+  pkg/utils/utils.go                               | ~2
+  pkg/internal/event_types/event_types.go          | ~3
+  ------------------------------------------------|-------------------------
+  TOTAL                                            | ~392 linhas
+
+  MUDANCAS CRITICAS PARA FUNCIONAR NO iOS/Web:
+  1. Remover ViewOnceMessage wrapper de botoes e listas
+  2. Usar ListMessage legado ao inves de InteractiveMessage/NativeFlowMessage
+  3. Biz node com type="product_list" para listas
+  4. Biz node com <interactive type="native_flow" v="1"> + child node para botoes/carrossel
+  5. Gerar JpegThumbnail para imagens do carrossel
+  6. Nao enviar footer vazio (condicional)
+  7. Remover CarouselCardType e MessageParamsJSON dos cards individuais
+
+================================================================================
+ Documento gerado em: 01/04/2026
+ Evolution GO v0.6.0
+================================================================================

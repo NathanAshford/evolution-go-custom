@@ -10,6 +10,7 @@ import {
   Power,
   PowerOff,
   MessageSquare,
+  FlaskConical,
 } from "lucide-react";
 import type { Instance } from "@/types/instance";
 
@@ -21,6 +22,7 @@ type InstanceCardProps = {
   onConnect: (instance: Instance) => void;
   onDisconnect: (instance: Instance) => void;
   onSendMessage?: (instance: Instance) => void;
+  onTestMessage?: (instance: Instance) => void;
 };
 
 const getStatusBadge = (status: string) => {
@@ -47,6 +49,7 @@ export default function InstanceCard({
   onConnect,
   onDisconnect,
   onSendMessage,
+  onTestMessage,
 }: InstanceCardProps) {
   const isConnected = instance.status === "open";
 
@@ -141,8 +144,24 @@ export default function InstanceCard({
                 variant="ghost"
                 className="rounded-none h-12 px-4 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10"
                 onClick={() => onSendMessage(instance)}
+                title="Enviar mensagem de texto"
               >
                 <MessageSquare className="h-4 w-4" />
+              </Button>
+              <div className="w-px bg-sidebar-border" />
+            </>
+          )}
+
+          {/* Test Interactive Messages Button - only show if connected */}
+          {isConnected && onTestMessage && (
+            <>
+              <Button
+                variant="ghost"
+                className="rounded-none h-12 px-4 text-purple-500 hover:text-purple-400 hover:bg-purple-500/10"
+                onClick={() => onTestMessage(instance)}
+                title="Testar botoes, lista e carrossel"
+              >
+                <FlaskConical className="h-4 w-4" />
               </Button>
               <div className="w-px bg-sidebar-border" />
             </>

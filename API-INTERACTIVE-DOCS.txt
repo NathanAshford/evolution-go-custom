@@ -1,0 +1,664 @@
+================================================================================
+ EVOLUTION GO - DOCUMENTACAO DE ENDPOINTS INTERATIVOS
+ Botoes, Listas e Carrosseis
+ Compativel com: Android, iOS (iPhone), WhatsApp Web/Desktop
+================================================================================
+
+INDICE
+------
+1. Autenticacao
+2. SendButton - Envio de Botoes
+3. SendList - Envio de Listas
+4. SendCarousel - Envio de Carrosseis
+5. Eventos (ButtonClick) - Rastreio de Cliques
+6. Tipos de Botoes Suportados
+7. Exemplos Completos
+
+================================================================================
+1. AUTENTICACAO
+================================================================================
+
+Todos os endpoints requerem o header "apikey" com o token da instancia.
+
+  Header: apikey: <token_da_instancia>
+  Content-Type: application/json
+
+Para listar instancias e obter o token:
+  GET /instance/all
+  Header: apikey: <GLOBAL_API_KEY>
+
+================================================================================
+2. SEND BUTTON - ENVIO DE BOTOES
+================================================================================
+
+  Endpoint: POST /send/button
+  Auth: apikey (token da instancia)
+
+  PAYLOAD:
+  {
+    "number": "5511999999999",
+    "title": "Titulo do Botao",
+    "description": "Descricao que aparece no corpo da mensagem",
+    "footer": "Texto do rodape (opcional)",
+    "buttons": [
+      {
+        "type": "reply",
+        "displayText": "Texto do Botao",
+        "id": "identificador_unico"
+      }
+    ]
+  }
+
+  CAMPOS:
+  - number (obrigatorio): Numero do destinatario com DDI+DDD (ex: 5511999999999)
+  - title (opcional): Titulo exibido em negrito
+  - description (obrigatorio): Texto do corpo da mensagem
+  - footer (opcional): Texto pequeno no rodape. Nao enviar vazio (causa problema no iOS)
+  - buttons (obrigatorio): Array de botoes (max 3 para reply, sem limite para outros tipos)
+  - delay (opcional): Delay em ms antes de enviar
+  - quoted (opcional): { "messageId": "ID_DA_MENSAGEM" } para responder a uma mensagem
+
+  TIPOS DE BOTOES:
+
+  a) Quick Reply (reply) - Botao de resposta rapida
+     Max 3 botoes. Nao pode misturar com outros tipos.
+     {
+       "type": "reply",
+       "displayText": "Texto visivel",
+       "id": "id_unico_para_rastreio"
+     }
+
+  b) URL (url) - Botao que abre um link
+     {
+       "type": "url",
+       "displayText": "Acessar Site",
+       "url": "https://example.com"
+     }
+
+  c) Call (call) - Botao que inicia ligacao
+     {
+       "type": "call",
+       "displayText": "Ligar Agora",
+       "phoneNumber": "+5511999999999"
+     }
+
+  d) Copy (copy) - Botao que copia texto
+     {
+       "type": "copy",
+       "displayText": "Copiar Codigo",
+       "copyCode": "ABC123"
+     }
+
+  e) Pix (pix) - Botao de pagamento PIX
+     Deve ser enviado SOZINHO (nao misturar com outros).
+     {
+       "type": "pix",
+       "currency": "BRL",
+       "name": "Nome do Recebedor",
+       "keyType": "CPF",
+       "key": "12345678901"
+     }
+
+  --------------------------------------------------------------------------
+  EXEMPLO 1: Botoes Quick Reply
+  --------------------------------------------------------------------------
+
+  curl -X POST "http://localhost:8080/send/button" \
+    -H "Content-Type: application/json" \
+    -H "apikey: SEU_TOKEN" \
+    -d '{
+      "number": "5511999999999",
+      "title": "Atendimento",
+      "description": "Como podemos ajudar voce hoje?",
+      "footer": "Responda clicando em um botao",
+      "buttons": [
+        {"type": "reply", "displayText": "Suporte Tecnico", "id": "suporte"},
+        {"type": "reply", "displayText": "Financeiro", "id": "financeiro"},
+        {"type": "reply", "displayText": "Vendas", "id": "vendas"}
+      ]
+    }'
+
+  --------------------------------------------------------------------------
+  EXEMPLO 2: Botoes Mistos (URL + Call + Copy)
+  --------------------------------------------------------------------------
+
+  curl -X POST "http://localhost:8080/send/button" \
+    -H "Content-Type: application/json" \
+    -H "apikey: SEU_TOKEN" \
+    -d '{
+      "number": "5511999999999",
+      "title": "Nossos Canais",
+      "description": "Escolha como deseja entrar em contato:",
+      "footer": "Empresa XYZ",
+      "buttons": [
+        {"type": "url", "displayText": "Acessar Site", "url": "https://empresa.com"},
+        {"type": "call", "displayText": "Ligar para Nos", "phoneNumber": "+5511999999999"},
+        {"type": "copy", "displayText": "Copiar Email", "copyCode": "contato@empresa.com"}
+      ]
+    }'
+
+  --------------------------------------------------------------------------
+  EXEMPLO 3: Botao PIX
+  --------------------------------------------------------------------------
+
+  curl -X POST "http://localhost:8080/send/button" \
+    -H "Content-Type: application/json" \
+    -H "apikey: SEU_TOKEN" \
+    -d '{
+      "number": "5511999999999",
+      "title": "Pagamento PIX",
+      "description": "Realize o pagamento via PIX:",
+      "buttons": [
+        {
+          "type": "pix",
+          "currency": "BRL",
+          "name": "Empresa XYZ LTDA",
+          "keyType": "CNPJ",
+          "key": "12345678000199"
+        }
+      ]
+    }'
+
+  --------------------------------------------------------------------------
+  RESPOSTA DE SUCESSO:
+  --------------------------------------------------------------------------
+
+  {
+    "data": {
+      "Info": {
+        "Chat": "5511999999999@s.whatsapp.net",
+        "ID": "3EB034D434158AD2CC0B9A",
+        "Type": "ButtonMessage",
+        "Timestamp": "2026-04-01T17:54:09Z"
+      },
+      "Message": { ... }
+    },
+    "message": "success"
+  }
+
+================================================================================
+3. SEND LIST - ENVIO DE LISTAS
+================================================================================
+
+  Endpoint: POST /send/list
+  Auth: apikey (token da instancia)
+
+  PAYLOAD:
+  {
+    "number": "5511999999999",
+    "title": "Titulo da Lista",
+    "description": "Descricao exibida no corpo",
+    "buttonText": "Texto do botao que abre a lista",
+    "footerText": "Texto do rodape",
+    "sections": [
+      {
+        "title": "Nome da Secao",
+        "rows": [
+          {
+            "title": "Titulo da Opcao",
+            "description": "Descricao da opcao",
+            "rowId": "id_unico"
+          }
+        ]
+      }
+    ]
+  }
+
+  CAMPOS:
+  - number (obrigatorio): Numero do destinatario
+  - title (opcional): Titulo em negrito no topo
+  - description (obrigatorio): Texto do corpo da mensagem
+  - buttonText (obrigatorio): Texto do botao que abre a lista (default: "Ver Menu")
+  - footerText (opcional): Texto do rodape
+  - sections (obrigatorio): Array de secoes contendo rows
+    - title: Nome da secao
+    - rows: Array de opcoes
+      - title (obrigatorio): Texto da opcao
+      - description (opcional): Descricao da opcao
+      - rowId (obrigatorio): ID unico para rastreio do clique
+
+  --------------------------------------------------------------------------
+  EXEMPLO 1: Lista Simples
+  --------------------------------------------------------------------------
+
+  curl -X POST "http://localhost:8080/send/list" \
+    -H "Content-Type: application/json" \
+    -H "apikey: SEU_TOKEN" \
+    -d '{
+      "number": "5511999999999",
+      "title": "Cardapio Digital",
+      "description": "Escolha um item do nosso cardapio:",
+      "buttonText": "Ver Cardapio",
+      "footerText": "Restaurante XYZ",
+      "sections": [
+        {
+          "title": "Pratos Principais",
+          "rows": [
+            {"title": "Filé Mignon", "description": "Com arroz e batata - R$ 45,90", "rowId": "file_mignon"},
+            {"title": "Salmao Grelhado", "description": "Com legumes - R$ 52,90", "rowId": "salmao"},
+            {"title": "Frango Parmegiana", "description": "Com pure - R$ 35,90", "rowId": "frango"}
+          ]
+        },
+        {
+          "title": "Bebidas",
+          "rows": [
+            {"title": "Suco Natural", "description": "Laranja, Limao ou Maracuja - R$ 8,00", "rowId": "suco"},
+            {"title": "Refrigerante", "description": "Lata 350ml - R$ 6,00", "rowId": "refri"},
+            {"title": "Agua Mineral", "description": "500ml - R$ 4,00", "rowId": "agua"}
+          ]
+        },
+        {
+          "title": "Sobremesas",
+          "rows": [
+            {"title": "Pudim", "description": "R$ 12,00", "rowId": "pudim"},
+            {"title": "Petit Gateau", "description": "R$ 18,00", "rowId": "petit_gateau"}
+          ]
+        }
+      ]
+    }'
+
+  --------------------------------------------------------------------------
+  EXEMPLO 2: Lista de Servicos
+  --------------------------------------------------------------------------
+
+  curl -X POST "http://localhost:8080/send/list" \
+    -H "Content-Type: application/json" \
+    -H "apikey: SEU_TOKEN" \
+    -d '{
+      "number": "5511999999999",
+      "description": "Selecione o servico desejado:",
+      "buttonText": "Ver Servicos",
+      "sections": [
+        {
+          "title": "Atendimento",
+          "rows": [
+            {"title": "Falar com Atendente", "description": "Atendimento humano", "rowId": "atendente"},
+            {"title": "FAQ", "description": "Perguntas frequentes", "rowId": "faq"},
+            {"title": "Abrir Ticket", "description": "Registrar ocorrencia", "rowId": "ticket"}
+          ]
+        }
+      ]
+    }'
+
+  --------------------------------------------------------------------------
+  RESPOSTA DE SUCESSO:
+  --------------------------------------------------------------------------
+
+  {
+    "data": {
+      "Info": {
+        "Chat": "5511999999999@s.whatsapp.net",
+        "ID": "3EB0XXXXXXXXXXXXXX",
+        "Type": "ListMessage",
+        "Timestamp": "2026-04-01T18:00:00Z"
+      },
+      "Message": { ... }
+    },
+    "message": "success"
+  }
+
+================================================================================
+4. SEND CAROUSEL - ENVIO DE CARROSSEIS
+================================================================================
+
+  Endpoint: POST /send/carousel
+  Auth: apikey (token da instancia)
+
+  PAYLOAD:
+  {
+    "number": "5511999999999",
+    "body": "Texto opcional do corpo principal",
+    "footer": "Texto opcional do rodape principal",
+    "cards": [
+      {
+        "header": {
+          "title": "Titulo do Card",
+          "imageUrl": "https://url-da-imagem.com/foto.jpg"
+        },
+        "body": {
+          "text": "Texto do corpo do card"
+        },
+        "footer": "Rodape do card",
+        "buttons": [
+          {
+            "type": "REPLY",
+            "displayText": "Texto do Botao",
+            "id": "id_rastreio"
+          }
+        ]
+      }
+    ]
+  }
+
+  CAMPOS:
+  - number (obrigatorio): Numero do destinatario
+  - body (opcional): Texto do corpo principal (aparece acima dos cards)
+  - footer (opcional): Rodape principal
+  - cards (obrigatorio): Array de cards (min 2, max ~10)
+    - header (obrigatorio):
+      - title (opcional): Titulo do card
+      - subtitle (opcional): Subtitulo
+      - imageUrl (obrigatorio*): URL da imagem do card
+      - videoUrl (alternativa): URL de video (ao inves de imagem)
+    - body (obrigatorio): Objeto com o texto do card
+      - text (obrigatorio): Texto exibido no corpo do card
+    - footer (opcional): Rodape do card
+    - buttons (opcional): Array de botoes do card
+      - type: "REPLY", "URL", "CALL", "COPY"
+      - displayText: Texto visivel do botao
+      - id: ID para rastreio (reply)
+      - copyCode: Texto para copiar (copy)
+
+  * Todos os cards DEVEM ter imagem para o carrossel renderizar corretamente.
+    Imagens sao automaticamente redimensionadas e recebem thumbnail JPEG
+    para carregamento automatico (sem precisar clicar).
+
+  TIPOS DE BOTOES NOS CARDS:
+
+  a) Reply - Resposta rapida
+     {"type": "REPLY", "displayText": "Texto", "id": "id_rastreio"}
+
+  b) URL - Abre link
+     {"type": "URL", "displayText": "Acessar", "id": "https://site.com"}
+
+  c) Call - Liga para numero
+     {"type": "CALL", "displayText": "Ligar", "id": "+5511999999999"}
+
+  d) Copy - Copia texto
+     {"type": "COPY", "displayText": "Copiar", "copyCode": "CODIGO123"}
+
+  --------------------------------------------------------------------------
+  EXEMPLO 1: Carrossel de Produtos
+  --------------------------------------------------------------------------
+
+  curl -X POST "http://localhost:8080/send/carousel" \
+    -H "Content-Type: application/json" \
+    -H "apikey: SEU_TOKEN" \
+    -d '{
+      "number": "5511999999999",
+      "body": "Confira nossos produtos em destaque!",
+      "footer": "Loja Virtual XYZ",
+      "cards": [
+        {
+          "header": {
+            "title": "Smartphone Pro Max",
+            "imageUrl": "https://placehold.co/600x400/1a1a2e/white?text=Smartphone"
+          },
+          "body": {
+            "text": "Tela 6.7 AMOLED, 256GB, Camera 108MP.\nDe R$ 4.999 por R$ 3.799!"
+          },
+          "footer": "12x sem juros",
+          "buttons": [
+            {"type": "REPLY", "displayText": "Comprar", "id": "comprar_smartphone"},
+            {"type": "URL", "displayText": "Ver Detalhes", "id": "https://loja.com/smartphone"}
+          ]
+        },
+        {
+          "header": {
+            "title": "Notebook Ultra",
+            "imageUrl": "https://placehold.co/600x400/16213e/white?text=Notebook"
+          },
+          "body": {
+            "text": "Intel i7, 16GB RAM, SSD 512GB, Tela 15.6 FHD.\nPor apenas R$ 5.299!"
+          },
+          "footer": "Frete gratis",
+          "buttons": [
+            {"type": "REPLY", "displayText": "Comprar", "id": "comprar_notebook"},
+            {"type": "URL", "displayText": "Ver Detalhes", "id": "https://loja.com/notebook"}
+          ]
+        },
+        {
+          "header": {
+            "title": "Fone Bluetooth",
+            "imageUrl": "https://placehold.co/600x400/0f3460/white?text=Fone"
+          },
+          "body": {
+            "text": "Cancelamento de ruido ativo, 30h bateria.\nR$ 299,90"
+          },
+          "footer": "Envio imediato",
+          "buttons": [
+            {"type": "REPLY", "displayText": "Comprar", "id": "comprar_fone"},
+            {"type": "CALL", "displayText": "Ligar p/ Comprar", "id": "+5511999999999"}
+          ]
+        }
+      ]
+    }'
+
+  --------------------------------------------------------------------------
+  EXEMPLO 2: Carrossel de Servicos com Botoes Variados
+  --------------------------------------------------------------------------
+
+  curl -X POST "http://localhost:8080/send/carousel" \
+    -H "Content-Type: application/json" \
+    -H "apikey: SEU_TOKEN" \
+    -d '{
+      "number": "5511999999999",
+      "body": "Conheca nossos planos:",
+      "cards": [
+        {
+          "header": {
+            "title": "Plano Basico",
+            "imageUrl": "https://placehold.co/600x400/2ecc71/white?text=Basico"
+          },
+          "body": {
+            "text": "Ideal para pequenas empresas.\n- 1.000 mensagens/mes\n- 1 instancia\n- Suporte email\n\nR$ 97/mes"
+          },
+          "buttons": [
+            {"type": "REPLY", "displayText": "Contratar Basico", "id": "plano_basico"},
+            {"type": "COPY", "displayText": "Copiar Link", "copyCode": "https://planos.com/basico"}
+          ]
+        },
+        {
+          "header": {
+            "title": "Plano Pro",
+            "imageUrl": "https://placehold.co/600x400/3498db/white?text=Pro"
+          },
+          "body": {
+            "text": "Para empresas em crescimento.\n- 10.000 mensagens/mes\n- 5 instancias\n- Suporte prioritario\n\nR$ 297/mes"
+          },
+          "buttons": [
+            {"type": "REPLY", "displayText": "Contratar Pro", "id": "plano_pro"},
+            {"type": "COPY", "displayText": "Copiar Link", "copyCode": "https://planos.com/pro"}
+          ]
+        },
+        {
+          "header": {
+            "title": "Plano Enterprise",
+            "imageUrl": "https://placehold.co/600x400/9b59b6/white?text=Enterprise"
+          },
+          "body": {
+            "text": "Solucao completa.\n- Mensagens ilimitadas\n- Instancias ilimitadas\n- Suporte 24/7\n\nSob consulta"
+          },
+          "buttons": [
+            {"type": "REPLY", "displayText": "Solicitar Orcamento", "id": "plano_enterprise"},
+            {"type": "CALL", "displayText": "Falar com Vendas", "id": "+5511999999999"}
+          ]
+        }
+      ]
+    }'
+
+  --------------------------------------------------------------------------
+  RESPOSTA DE SUCESSO:
+  --------------------------------------------------------------------------
+
+  {
+    "data": {
+      "Info": {
+        "Chat": "5511999999999@s.whatsapp.net",
+        "ID": "3EB0XXXXXXXXXXXXXX",
+        "Type": "InteractiveMessage",
+        "Timestamp": "2026-04-01T18:30:00Z"
+      },
+      "Message": { ... }
+    },
+    "message": "success"
+  }
+
+================================================================================
+5. EVENTOS (ButtonClick) - RASTREIO DE CLIQUES
+================================================================================
+
+  Quando um usuario clica em um botao (reply, url, etc.), lista ou carrossel,
+  a API dispara o evento "ButtonClick" para todos os canais configurados:
+  - Webhook
+  - WebSocket
+  - RabbitMQ
+  - NATS
+
+  REQUISITO: A instancia deve ter o evento "BUTTON_CLICK" ou "MESSAGE"
+  configurado nos events.
+
+  --------------------------------------------------------------------------
+  PAYLOAD DO EVENTO ButtonClick:
+  --------------------------------------------------------------------------
+
+  {
+    "event": "ButtonClick",
+    "data": {
+      "buttonId": "id_do_botao_clicado",
+      "buttonText": "Texto exibido no botao",
+      "type": "native_flow_response",
+      "phone": "5511999999999",
+      "jid": "5511999999999@s.whatsapp.net",
+      "pushName": "Nome do Contato",
+      "messageId": "3EB0XXXXXXXXXXXXXX",
+      "chat": "5511999999999@s.whatsapp.net",
+      "fromMe": false,
+      "timestamp": 1711990000,
+      "extraData": {}
+    },
+    "instanceToken": "token_da_instancia",
+    "instanceId": "uuid_da_instancia",
+    "instanceName": "nome_da_instancia"
+  }
+
+  TIPOS DE RESPOSTA (campo "type"):
+
+  - "native_flow_response": Clique em botao enviado via SendButton ou SendCarousel
+    (usa InteractiveMessage/NativeFlowMessage)
+
+  - "list_response": Selecao de item em lista enviada via SendList
+    (usa ListMessage)
+
+  - "buttons_response": Resposta a botoes legados (ButtonsMessage)
+
+  - "template_button_reply": Resposta a template buttons
+
+  --------------------------------------------------------------------------
+  EXEMPLO DE EVENTO - Botao Reply Clicado:
+  --------------------------------------------------------------------------
+
+  {
+    "event": "ButtonClick",
+    "data": {
+      "buttonId": "suporte",
+      "buttonText": "Suporte Tecnico",
+      "type": "native_flow_response",
+      "phone": "5511999999999",
+      "jid": "5511999999999@s.whatsapp.net",
+      "pushName": "Joao Silva",
+      "messageId": "3EB034D434158AD2CC0B9A",
+      "chat": "5511999999999@s.whatsapp.net",
+      "fromMe": false,
+      "timestamp": 1711990500
+    },
+    "instanceToken": "teste123",
+    "instanceId": "4ee8ab07-8a67-42a8-a029-f382315912b1",
+    "instanceName": "teste"
+  }
+
+  --------------------------------------------------------------------------
+  EXEMPLO DE EVENTO - Item de Lista Selecionado:
+  --------------------------------------------------------------------------
+
+  {
+    "event": "ButtonClick",
+    "data": {
+      "buttonId": "file_mignon",
+      "buttonText": "Filé Mignon",
+      "type": "list_response",
+      "phone": "5511999999999",
+      "jid": "5511999999999@s.whatsapp.net",
+      "pushName": "Maria Santos",
+      "messageId": "3EB0XXXXXXXXXXXXXX",
+      "chat": "5511999999999@s.whatsapp.net",
+      "fromMe": false,
+      "timestamp": 1711991000
+    },
+    "instanceToken": "teste123",
+    "instanceId": "4ee8ab07-8a67-42a8-a029-f382315912b1",
+    "instanceName": "teste"
+  }
+
+  --------------------------------------------------------------------------
+  EXEMPLO DE EVENTO - Botao de Carrossel Clicado:
+  --------------------------------------------------------------------------
+
+  {
+    "event": "ButtonClick",
+    "data": {
+      "buttonId": "comprar_smartphone",
+      "buttonText": "Comprar",
+      "type": "native_flow_response",
+      "phone": "5511999999999",
+      "jid": "5511999999999@s.whatsapp.net",
+      "pushName": "Pedro Oliveira",
+      "messageId": "3EB0XXXXXXXXXXXXXX",
+      "chat": "5511999999999@s.whatsapp.net",
+      "fromMe": false,
+      "timestamp": 1711991500
+    },
+    "instanceToken": "teste123",
+    "instanceId": "4ee8ab07-8a67-42a8-a029-f382315912b1",
+    "instanceName": "teste"
+  }
+
+================================================================================
+6. TIPOS DE BOTOES - RESUMO
+================================================================================
+
+  +----------+---------------+--------------------+----------------------------+
+  | Tipo     | SendButton    | SendCarousel       | Campo obrigatorio          |
+  +----------+---------------+--------------------+----------------------------+
+  | reply    | "reply"       | "REPLY" (default)  | displayText, id            |
+  | url      | "url"         | "URL"              | displayText, url/id        |
+  | call     | "call"        | "CALL"             | displayText, phoneNumber/id|
+  | copy     | "copy"        | "COPY"             | displayText, copyCode      |
+  | pix      | "pix"         | N/A                | currency, name, keyType,key|
+  +----------+---------------+--------------------+----------------------------+
+
+  REGRAS:
+  - SendButton com "reply": Maximo 3 botoes. NAO misturar com outros tipos.
+  - SendButton com "pix": Deve ser enviado SOZINHO.
+  - SendButton com "url"/"call"/"copy": Podem ser misturados entre si.
+  - SendCarousel: Todos os tipos podem ser misturados no mesmo card.
+  - SendList: Nao tem botoes nos items, usa rowId para rastreio.
+
+================================================================================
+7. NOTAS IMPORTANTES
+================================================================================
+
+  COMPATIBILIDADE:
+  - Todos os endpoints funcionam em Android, iOS e WhatsApp Web/Desktop.
+  - O footer vazio NAO deve ser enviado (causa problema no iOS).
+  - Carrosseis DEVEM ter imagem em TODOS os cards para renderizar.
+  - Carrosseis precisam de no MINIMO 2 cards.
+
+  RASTREIO:
+  - Use IDs unicos nos botoes para identificar qual botao foi clicado.
+  - O evento ButtonClick e disparado para webhook/websocket/rabbitmq/nats.
+  - A instancia deve ter evento "BUTTON_CLICK" ou "MESSAGE" habilitado.
+
+  FORMATO DO NUMERO:
+  - Envie com DDI + DDD + numero (ex: 5511999999999)
+  - NAO use caracteres especiais (+, -, espacos)
+  - Para grupos: use o JID do grupo (ex: 120363XXXXX@g.us)
+
+  MENSAGEM QUOTED (responder mensagem):
+  - Adicione o campo "quoted" ao payload:
+    "quoted": { "messageId": "3EB0XXXXXXXXXXXXXX" }
+
+================================================================================
+ Documentacao gerada em: 01/04/2026
+ Evolution GO v0.6.0
+================================================================================

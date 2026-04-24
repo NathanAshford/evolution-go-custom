@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution GO - Carousel Sender</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0a0a; color: #e0e0e0; min-height: 100vh; }
+
+        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 30px; border-bottom: 2px solid #00d54b; display: flex; align-items: center; gap: 15px; }
+        .header h1 { font-size: 22px; color: #00d54b; }
+        .header span { color: #888; font-size: 14px; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Config Section */
+        .config-section { background: #1a1a2e; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #2a2a4a; }
+        .config-section h2 { color: #00d54b; font-size: 16px; margin-bottom: 15px; }
+        .config-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+        label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, textarea { width: 100%; padding: 10px 12px; background: #0d0d1a; border: 1px solid #333; border-radius: 8px; color: #e0e0e0; font-size: 14px; transition: border-color 0.2s; }
+        input:focus, textarea:focus { outline: none; border-color: #00d54b; }
+        textarea { resize: vertical; min-height: 60px; }
+
+        /* Cards Section */
+        .cards-container { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+
+        .card { background: #1a1a2e; border-radius: 12px; padding: 16px; border: 1px solid #2a2a4a; width: 360px; flex-shrink: 0; position: relative; transition: border-color 0.2s; }
+        .card:hover { border-color: #00d54b33; }
+        .card-header-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .card-header-label h3 { color: #00d54b; font-size: 15px; }
+
+        .btn-remove-card { background: #ff4444; color: white; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+        .btn-remove-card:hover { background: #cc0000; }
+
+        .image-preview { width: 100%; height: 140px; background: #0d0d1a; border-radius: 8px; margin: 8px 0; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed #333; }
+        .image-preview img { max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 8px; }
+        .image-preview .placeholder { color: #555; font-size: 13px; }
+
+        /* Buttons inside card */
+        .buttons-section { margin-top: 12px; }
+        .buttons-section h4 { color: #aaa; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .button-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+        .button-row input { flex: 1; padding: 8px 10px; font-size: 13px; }
+        .button-row input:first-child { flex: 1.5; }
+
+        .btn-small { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; }
+        .btn-add-button { background: #1a3a2a; color: #00d54b; border: 1px solid #00d54b44; }
+        .btn-add-button:hover { background: #00d54b22; }
+        .btn-remove-button { background: #3a1a1a; color: #ff4444; border: 1px solid #ff444444; }
+        .btn-remove-button:hover { background: #ff444422; }
+
+        /* Action Buttons */
+        .actions { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+        .btn { padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #00d54b, #00a83a); color: white; font-size: 16px; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px #00d54b44; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: #2a2a4a; color: #ccc; }
+        .btn-secondary:hover { background: #3a3a5a; }
+        .btn-outline { background: transparent; color: #00d54b; border: 1px solid #00d54b; }
+        .btn-outline:hover { background: #00d54b11; }
+
+        /* Response */
+        .response-section { margin-top: 20px; background: #1a1a2e; border-radius: 12px; padding: 16px; border: 1px solid #2a2a4a; display: none; }
+        .response-section.show { display: block; }
+        .response-section h3 { color: #00d54b; font-size: 14px; margin-bottom: 10px; }
+        .response-section pre { background: #0d0d1a; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; color: #aaa; max-height: 300px; overflow-y: auto; }
+        .response-section.error pre { color: #ff4444; }
+        .response-section.success pre { color: #00d54b; }
+
+        /* Templates */
+        .templates-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .template-chip { padding: 6px 14px; background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 20px; color: #ccc; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+        .template-chip:hover { border-color: #00d54b; color: #00d54b; }
+
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff3; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 8px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .field-group { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Evolution GO</h1>
+        <span>Carousel Sender</span>
+    </div>
+
+    <div class="container">
+        <!-- Connection Config -->
+        <div class="config-section">
+            <h2>Configuracao</h2>
+            <div class="config-grid">
+                <div class="field-group">
+                    <label>API URL</label>
+                    <input type="text" id="apiUrl" value="http://localhost:8080" />
+                </div>
+                <div class="field-group">
+                    <label>API Key (Token da Instancia)</label>
+                    <input type="text" id="apiKey" value="teste123" />
+                </div>
+                <div class="field-group">
+                    <label>Numero do Destinatario</label>
+                    <input type="text" id="destNumber" placeholder="5511999999999" />
+                </div>
+            </div>
+            <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="field-group">
+                    <label>Texto do Corpo (opcional)</label>
+                    <input type="text" id="carouselBody" placeholder="Texto geral do carrossel" />
+                </div>
+                <div class="field-group">
+                    <label>Rodape (opcional)</label>
+                    <input type="text" id="carouselFooter" placeholder="Rodape do carrossel" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates -->
+        <div class="templates-bar">
+            <span style="color: #888; font-size: 12px; line-height: 30px; margin-right: 4px;">Templates:</span>
+            <div class="template-chip" onclick="loadTemplate('ecommerce')">E-commerce</div>
+            <div class="template-chip" onclick="loadTemplate('servicos')">Servicos</div>
+            <div class="template-chip" onclick="loadTemplate('cardapio')">Cardapio</div>
+            <div class="template-chip" onclick="loadTemplate('limpar')">Limpar Tudo</div>
+        </div>
+
+        <!-- Cards -->
+        <div id="cardsContainer" class="cards-container"></div>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button class="btn btn-secondary" onclick="addCard()">+ Adicionar Card</button>
+            <button class="btn btn-outline" onclick="previewJSON()">Ver JSON</button>
+            <button class="btn btn-primary" id="btnSend" onclick="sendCarousel()">Enviar Carrossel</button>
+        </div>
+
+        <!-- Response -->
+        <div id="responseSection" class="response-section">
+            <h3 id="responseTitle">Resposta</h3>
+            <pre id="responseBody"></pre>
+        </div>
+    </div>
+
+    <script>
+        let cards = [];
+        let cardIdCounter = 0;
+
+        function createCardData() {
+            return {
+                id: ++cardIdCounter,
+                imageUrl: '',
+                bodyText: '',
+                footer: '',
+                buttons: [
+                    { displayText: '', id: '' }
+                ]
+            };
+        }
+
+        function addCard(data) {
+            const card = data || createCardData();
+            if (!data) cards.push(card);
+            renderCards();
+        }
+
+        function removeCard(cardId) {
+            cards = cards.filter(c => c.id !== cardId);
+            renderCards();
+        }
+
+        function addButton(cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (card && card.buttons.length < 3) {
+                card.buttons.push({ displayText: '', id: '' });
+                renderCards();
+            }
+        }
+
+        function removeButton(cardId, btnIdx) {
+            const card = cards.find(c => c.id === cardId);
+            if (card && card.buttons.length > 1) {
+                card.buttons.splice(btnIdx, 1);
+                renderCards();
+            }
+        }
+
+        function syncCardData() {
+            cards.forEach(card => {
+                const el = document.getElementById(`card-${card.id}`);
+                if (!el) return;
+                card.imageUrl = el.querySelector('.card-image-url').value;
+                card.bodyText = el.querySelector('.card-body-text').value;
+                card.footer = el.querySelector('.card-footer').value;
+                const btnRows = el.querySelectorAll('.button-row');
+                card.buttons = [];
+                btnRows.forEach(row => {
+                    const inputs = row.querySelectorAll('input');
+                    card.buttons.push({
+                        displayText: inputs[0].value,
+                        id: inputs[1].value
+                    });
+                });
+            });
+        }
+
+        function renderCards() {
+            syncCardData();
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+
+            cards.forEach((card, idx) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.id = `card-${card.id}`;
+
+                let buttonsHtml = card.buttons.map((btn, bi) => `
+                    <div class="button-row">
+                        <input type="text" placeholder="Texto do botao" value="${esc(btn.displayText)}" />
+                        <input type="text" placeholder="ID" value="${esc(btn.id)}" />
+                        <button class="btn-small btn-remove-button" onclick="removeButton(${card.id}, ${bi})" ${card.buttons.length <= 1 ? 'disabled style="opacity:0.3"' : ''}>X</button>
+                    </div>
+                `).join('');
+
+                div.innerHTML = `
+                    <div class="card-header-label">
+                        <h3>Card ${idx + 1}</h3>
+                        <button class="btn-remove-card" onclick="removeCard(${card.id})" ${cards.length <= 1 ? 'disabled style="opacity:0.3"' : ''}>Remover</button>
+                    </div>
+                    <div class="field-group">
+                        <label>URL da Imagem</label>
+                        <input type="text" class="card-image-url" placeholder="https://exemplo.com/imagem.png" value="${esc(card.imageUrl)}" oninput="updatePreview(${card.id}, this.value)" />
+                    </div>
+                    <div class="image-preview" id="preview-${card.id}">
+                        ${card.imageUrl ? `<img src="${esc(card.imageUrl)}" onerror="this.parentElement.innerHTML='<span class=placeholder>Imagem invalida</span>'" />` : '<span class="placeholder">Sem imagem</span>'}
+                    </div>
+                    <div class="field-group">
+                        <label>Texto do Card</label>
+                        <textarea class="card-body-text" placeholder="Descricao do card...">${esc(card.bodyText)}</textarea>
+                    </div>
+                    <div class="field-group">
+                        <label>Rodape do Card</label>
+                        <input type="text" class="card-footer" placeholder="Rodape (opcional)" value="${esc(card.footer)}" />
+                    </div>
+                    <div class="buttons-section">
+                        <h4>Botoes (max 3)</h4>
+                        ${buttonsHtml}
+                        <button class="btn-small btn-add-button" onclick="addButton(${card.id})" ${card.buttons.length >= 3 ? 'disabled style="opacity:0.3"' : ''}>+ Botao</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updatePreview(cardId, url) {
+            const preview = document.getElementById(`preview-${cardId}`);
+            if (url.trim()) {
+                preview.innerHTML = `<img src="${esc(url)}" onerror="this.parentElement.innerHTML='<span class=placeholder>Imagem invalida</span>'" />`;
+            } else {
+                preview.innerHTML = '<span class="placeholder">Sem imagem</span>';
+            }
+        }
+
+        function esc(str) {
+            return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function buildPayload() {
+            syncCardData();
+            const number = document.getElementById('destNumber').value.trim();
+            const body = document.getElementById('carouselBody').value.trim();
+            const footer = document.getElementById('carouselFooter').value.trim();
+
+            const payload = {
+                number: number,
+                cards: cards.map(card => {
+                    const c = {
+                        header: { imageUrl: card.imageUrl },
+                        body: { text: card.bodyText },
+                        buttons: card.buttons.filter(b => b.displayText).map(b => ({
+                            displayText: b.displayText,
+                            id: b.id || b.displayText.toLowerCase().replace(/\s+/g, '_')
+                        }))
+                    };
+                    if (card.footer) c.footer = card.footer;
+                    return c;
+                })
+            };
+            if (body) payload.body = body;
+            if (footer) payload.footer = footer;
+            return payload;
+        }
+
+        function previewJSON() {
+            const payload = buildPayload();
+            const section = document.getElementById('responseSection');
+            const title = document.getElementById('responseTitle');
+            const body = document.getElementById('responseBody');
+            section.className = 'response-section show';
+            title.textContent = 'JSON Preview';
+            body.textContent = JSON.stringify(payload, null, 2);
+        }
+
+        async function sendCarousel() {
+            const number = document.getElementById('destNumber').value.trim();
+            if (!number) { alert('Preencha o numero do destinatario!'); return; }
+
+            syncCardData();
+            const hasEmptyImage = cards.some(c => !c.imageUrl.trim());
+            if (hasEmptyImage) { alert('Todos os cards precisam ter uma imagem!'); return; }
+            const hasEmptyBody = cards.some(c => !c.bodyText.trim());
+            if (hasEmptyBody) { alert('Todos os cards precisam ter texto!'); return; }
+
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const payload = buildPayload();
+
+            const btn = document.getElementById('btnSend');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Enviando...';
+
+            const section = document.getElementById('responseSection');
+            section.className = 'response-section show';
+            document.getElementById('responseTitle').textContent = 'Enviando...';
+            document.getElementById('responseBody').textContent = '';
+
+            try {
+                const res = await fetch(`${apiUrl}/send/carousel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': apiKey
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok && data.message === 'success') {
+                    section.className = 'response-section show success';
+                    document.getElementById('responseTitle').textContent = 'Enviado com Sucesso!';
+                } else {
+                    section.className = 'response-section show error';
+                    document.getElementById('responseTitle').textContent = 'Erro no Envio';
+                }
+                document.getElementById('responseBody').textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                section.className = 'response-section show error';
+                document.getElementById('responseTitle').textContent = 'Erro de Conexao';
+                document.getElementById('responseBody').textContent = err.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Enviar Carrossel';
+            }
+        }
+
+        // Templates
+        function loadTemplate(name) {
+            cards = [];
+            cardIdCounter = 0;
+
+            if (name === 'limpar') {
+                cards = [createCardData()];
+                renderCards();
+                return;
+            }
+
+            const templates = {
+                ecommerce: [
+                    { imageUrl: 'https://placehold.co/600x400/FF6B35/white?text=Produto+1', bodyText: 'Camiseta Premium - Algodao organico, conforto e estilo. De R$89 por R$59,90!', footer: 'Frete gratis', buttons: [{ displayText: 'Comprar Agora', id: 'buy_1' }, { displayText: 'Ver Detalhes', id: 'details_1' }] },
+                    { imageUrl: 'https://placehold.co/600x400/2EC4B6/white?text=Produto+2', bodyText: 'Tenis Esportivo - Performance e design moderno. De R$299 por R$199,90!', footer: 'Parcele em 3x', buttons: [{ displayText: 'Comprar Agora', id: 'buy_2' }, { displayText: 'Ver Detalhes', id: 'details_2' }] },
+                    { imageUrl: 'https://placehold.co/600x400/E71D36/white?text=Produto+3', bodyText: 'Relogio Smart - Monitore saude e notificacoes. De R$459 por R$349,90!', footer: 'Garantia 1 ano', buttons: [{ displayText: 'Comprar Agora', id: 'buy_3' }, { displayText: 'Ver Detalhes', id: 'details_3' }] }
+                ],
+                servicos: [
+                    { imageUrl: 'https://placehold.co/600x400/6C5CE7/white?text=Plano+Basic', bodyText: 'Plano Basic - Ideal para iniciantes. Suporte por email e 5GB de armazenamento.', footer: 'R$ 29,90/mes', buttons: [{ displayText: 'Assinar', id: 'plan_basic' }, { displayText: 'Saiba Mais', id: 'info_basic' }] },
+                    { imageUrl: 'https://placehold.co/600x400/00B894/white?text=Plano+Pro', bodyText: 'Plano Pro - Para profissionais. Suporte prioritario e 50GB de armazenamento.', footer: 'R$ 79,90/mes', buttons: [{ displayText: 'Assinar', id: 'plan_pro' }, { displayText: 'Saiba Mais', id: 'info_pro' }] },
+                    { imageUrl: 'https://placehold.co/600x400/FDCB6E/333?text=Plano+Enterprise', bodyText: 'Plano Enterprise - Solucao completa. Suporte 24/7 e armazenamento ilimitado.', footer: 'R$ 199,90/mes', buttons: [{ displayText: 'Assinar', id: 'plan_ent' }, { displayText: 'Falar com Vendas', id: 'sales_ent' }] }
+                ],
+                cardapio: [
+                    { imageUrl: 'https://placehold.co/600x400/E17055/white?text=Pizza', bodyText: 'Pizza Margherita - Molho de tomate, mussarela e manjericao fresco. Massa artesanal.', footer: 'R$ 39,90', buttons: [{ displayText: 'Pedir', id: 'order_pizza' }, { displayText: 'Personalizar', id: 'custom_pizza' }] },
+                    { imageUrl: 'https://placehold.co/600x400/F0932B/white?text=Hamburguer', bodyText: 'Burger Artesanal - Blend 180g, queijo cheddar, bacon crocante e molho especial.', footer: 'R$ 32,90', buttons: [{ displayText: 'Pedir', id: 'order_burger' }, { displayText: 'Personalizar', id: 'custom_burger' }] },
+                    { imageUrl: 'https://placehold.co/600x400/6AB04C/white?text=Salada', bodyText: 'Salada Caesar - Mix de folhas, frango grelhado, croutons e molho caesar caseiro.', footer: 'R$ 26,90', buttons: [{ displayText: 'Pedir', id: 'order_salad' }, { displayText: 'Personalizar', id: 'custom_salad' }] }
+                ]
+            };
+
+            const tpl = templates[name];
+            if (!tpl) return;
+
+            tpl.forEach(t => {
+                const card = createCardData();
+                card.imageUrl = t.imageUrl;
+                card.bodyText = t.bodyText;
+                card.footer = t.footer;
+                card.buttons = t.buttons;
+                cards.push(card);
+            });
+            renderCards();
+        }
+
+        // Init with 2 empty cards
+        cards = [createCardData(), createCardData()];
+        renderCards();
+    </script>
+</body>
+</html>

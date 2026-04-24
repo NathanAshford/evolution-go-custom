@@ -11,6 +11,7 @@ import Messages from '@/pages/Messages';
 import Events from '@/pages/Events';
 import Settings from '@/pages/Settings';
 import LicenseCallback from '@/pages/LicenseCallback';
+import ApiTester from '@/pages/ApiTester';
 import useAuth from '@/hooks/useAuth';
 import { DarkModeProvider } from '@/contexts/ThemeContext';
 
@@ -45,6 +46,7 @@ function App() {
               <Route path="instances/:instanceId/settings" element={<InstanceSettings />} />
               <Route path="messages" element={<Messages />} />
               <Route path="events" element={<Events />} />
+              <Route path="api-tester" element={<ApiTester />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             ) : (

@@ -305,6 +305,54 @@ export const sendMessage = async (
   return response.data;
 };
 
+/**
+ * Send a button message (test scenarios)
+ * POST /send/button
+ */
+export const sendButtonMessage = async (
+  instanceToken: string,
+  payload: Record<string, unknown>
+): Promise<{ message: string; data: unknown }> => {
+  const response = await apiClient.post<{ message: string; data: unknown }>(
+    '/send/button',
+    payload,
+    { headers: { apikey: instanceToken } }
+  );
+  return response.data;
+};
+
+/**
+ * Send a list message (test scenarios)
+ * POST /send/list
+ */
+export const sendListMessage = async (
+  instanceToken: string,
+  payload: Record<string, unknown>
+): Promise<{ message: string; data: unknown }> => {
+  const response = await apiClient.post<{ message: string; data: unknown }>(
+    '/send/list',
+    payload,
+    { headers: { apikey: instanceToken } }
+  );
+  return response.data;
+};
+
+/**
+ * Send a carousel message (test scenarios)
+ * POST /send/carousel
+ */
+export const sendCarouselMessage = async (
+  instanceToken: string,
+  payload: Record<string, unknown>
+): Promise<{ message: string; data: unknown }> => {
+  const response = await apiClient.post<{ message: string; data: unknown }>(
+    '/send/carousel',
+    payload,
+    { headers: { apikey: instanceToken } }
+  );
+  return response.data;
+};
+
 export default {
   fetchInstances,
   fetchInstance,
@@ -319,4 +367,7 @@ export default {
   deleteInstance,
   restartInstance,
   sendMessage,
+  sendButtonMessage,
+  sendListMessage,
+  sendCarouselMessage,
 };

@@ -494,11 +494,22 @@ func (s *sendHandler) SendContact(ctx *gin.Context) {
 
 // Send a button message
 // @Summary Send a button message
-// @Description Send a button message
+// @Description Send an interactive message with buttons. Each button has a `type`: `reply`, `copy`, `url`, `call` or `pix`.
+// @Description
+// @Description Combination rules enforced by the server:
+// @Description   - Up to 3 `reply` buttons per message.
+// @Description   - `reply` buttons cannot be mixed with any other type.
+// @Description   - `pix` button must be sent ALONE (no other button in the same message).
+// @Description
+// @Description WhatsApp client rendering quirks (NOT enforced by the server, but verified in the field):
+// @Description   - WhatsApp Web: only `reply`-only messages (up to 3) OR CTAs grouped together (`copy` + `url` + `call`) render correctly.
+// @Description   - Do NOT mix `reply` with CTA buttons (`copy`/`url`/`call`) — the message will not appear on WhatsApp Web.
+// @Description
+// @Description Required body fields: `number`, `title`, `description`, `footer`, `buttons`.
 // @Tags Send Message
 // @Accept json
 // @Produce json
-// @Param message body send_service.ContactStruct true "Message data"
+// @Param message body send_service.ButtonStruct true "Message data"
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
@@ -550,11 +561,17 @@ func (s *sendHandler) SendButton(ctx *gin.Context) {
 
 // Send a list message
 // @Summary Send a list message
-// @Description Send a list message
+// @Description Send an interactive list message (single-select) rendered as a tappable menu.
+// @Description
+// @Description Required body fields: `number`, `title`, `description`, `footerText`, `buttonText`, `sections`.
+// @Description Each section must contain one or more `rows`. When `rowId` is omitted, the server generates a fallback ID.
+// @Description When `buttonText` is empty, the server falls back to "Ver Menu".
+// @Description
+// @Description Uses legacy `ListMessage` format (no ViewOnceMessage wrapper) so it renders on iOS, Android and WhatsApp Web.
 // @Tags Send Message
 // @Accept json
 // @Produce json
-// @Param message body send_service.ContactStruct true "Message data"
+// @Param message body send_service.ListStruct true "Message data"
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
@@ -611,7 +628,22 @@ func (s *sendHandler) SendList(ctx *gin.Context) {
 
 // Send a carousel message
 // @Summary Send a carousel message
-// @Description Send a carousel message
+// @Description Send an interactive carousel (multiple swipeable cards). Each card carries its own image or video, body and optional buttons.
+// @Description
+// @Description Card button `type` accepted values (case-insensitive, uppercased internally): `REPLY` (default), `URL`, `CALL`, `COPY`.
+// @Description The `PIX` button type is NOT supported in carousel cards — use `/send/button` for PIX.
+// @Description
+// @Description IMPORTANT — `CarouselButtonStruct` is different from the flat button used in `/send/button`:
+// @Description   - URL button: put the link in the `id` field (NOT in a `url` field).
+// @Description   - CALL button: put the phone number in the `id` field (NOT in a `phoneNumber` field).
+// @Description   - COPY button: put the code to be copied in `copyCode`.
+// @Description   - REPLY button: put the payload/callback ID in `id`.
+// @Description
+// @Description Per-card combination rules (NOT enforced by the server, but verified in the field):
+// @Description   - Same WhatsApp Web quirk as `/send/button`: avoid mixing REPLY with CTA buttons (URL/CALL/COPY) in the same card — mixed sets do not render on Web.
+// @Description   - Stick to either "only REPLY" or "only CTAs grouped together" per card.
+// @Description
+// @Description Required body fields: `number`, `cards` (at least one). Each card requires `header` + `body`.
 // @Tags Send Message
 // @Accept json
 // @Produce json

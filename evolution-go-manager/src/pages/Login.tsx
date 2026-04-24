@@ -18,7 +18,7 @@ import useAuth from '@/hooks/useAuth';
 import { initRegister } from '@/services/api/license';
 
 export const Login: React.FC = () => {
-  const { login, checkLicense, setApiUrl, setApiKey: setStoreApiKey, isAuthenticated, licenseState, apiUrl: defaultApiUrl } = useAuth();
+  const { login, checkLicense, setApiUrl, setApiKey: setStoreApiKey, isAuthenticated, licenseState, apiUrl: defaultApiUrl, apiKey: storedApiKey } = useAuth();
   const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +56,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
     resolver: zodResolver(loginSchema),
     defaultValues: {
       apiUrl: defaultApiUrl,
-      apiKey: '',
+      apiKey: storedApiKey || '',
     },
   });
 

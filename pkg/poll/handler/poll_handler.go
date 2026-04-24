@@ -5,9 +5,14 @@ import (
 	"net/http"
 
 	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
+	poll_model "github.com/EvolutionAPI/evolution-go/pkg/poll/model"
 	poll_service "github.com/EvolutionAPI/evolution-go/pkg/poll/service"
 	"github.com/gin-gonic/gin"
 )
+
+// Keep poll_model referenced so the package import is not dropped
+// (swag reads Go source, not pre-processed, and needs the alias to be in scope).
+var _ = poll_model.PollResults{}
 
 type PollHandler struct {
 	pollService   poll_service.PollService
@@ -29,7 +34,7 @@ func NewPollHandler(pollService poll_service.PollService, loggerWrapper *logger_
 // @Accept json
 // @Produce json
 // @Param pollMessageId path string true "ID da mensagem da enquete"
-// @Success 200 {object} model.PollResults
+// @Success 200 {object} poll_model.PollResults
 // @Failure 400 {object} gin.H
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H

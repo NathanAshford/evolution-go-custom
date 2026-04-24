@@ -22,12 +22,15 @@ const useAuthStore = create<AuthStore>()(
 
       // Login method - validates connection and stores credentials
       login: async (apiUrl: string, apiKey: string) => {
-        try {
-          // Remove trailing slash from URL
-          const cleanUrl = apiUrl.replace(/\/$/, '');
+        // Remove trailing slash from URL
+        const cleanUrl = apiUrl.replace(/\/$/, '');
 
-          // Test connection to Evolution GO API using /server/ok endpoint
-          const response = await apiClient.get('/server/ok', {
+        try {
+          // Validate apikey against an admin-protected endpoint.
+          // /server/ok is public and does NOT authenticate the apikey,
+          // so hitting it would accept any value. /instance/all requires
+          // AuthAdmin (apikey == GLOBAL_API_KEY), which is what we need.
+          await apiClient.get('/instance/all', {
             baseURL: cleanUrl,
             headers: {
               apikey: apiKey,
@@ -36,20 +39,24 @@ const useAuthStore = create<AuthStore>()(
             params: { t: Date.now() },
           });
 
-          // If successful, store credentials
-          if (response.data?.status === 'ok') {
-            set({
-              apiUrl: cleanUrl,
-              apiKey,
-              isAuthenticated: true,
-            });
-          } else {
-            throw new Error('Falha ao conectar com a API');
-          }
-        } catch (error) {
+          // If request succeeded (2xx), credentials are valid
+          set({
+            apiUrl: cleanUrl,
+            apiKey,
+            isAuthenticated: true,
+          });
+        } catch (error: unknown) {
           console.error('Login error:', error);
+          const status = (error as { response?: { status?: number } })?.response?.status;
+
+          // Make sure we do NOT mark the session as authenticated on failure.
+          set({ isAuthenticated: false });
+
+          if (status === 401 || status === 403) {
+            throw new Error('API Key invalida. Verifique a chave informada.');
+          }
           throw new Error(
-            'Não foi possível conectar. Verifique a URL e API Key.'
+            'Nao foi possivel conectar. Verifique a URL e a API Key.'
           );
         }
       },

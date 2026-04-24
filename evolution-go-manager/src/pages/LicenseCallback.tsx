@@ -12,7 +12,7 @@ type CallbackState = 'activating' | 'success' | 'error';
 const LicenseCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setLicenseState, apiUrl, apiKey } = useAuth();
+  const { setLicenseState, apiUrl, apiKey, login } = useAuth();
 
   const [state, setState] = useState<CallbackState>('activating');
   const [errorMessage, setErrorMessage] = useState('');
@@ -37,9 +37,21 @@ const LicenseCallback: React.FC = () => {
         setLicenseState('licensed');
         toast.success('Licenca ativada com sucesso!');
 
-        setTimeout(() => {
-          navigate('/manager/login', { replace: true });
-        }, 2000);
+        // Autenticar a sessao usando as credenciais salvas antes do registro,
+        // para que o guard do Login nao force o usuario a digitar a apiKey novamente.
+        try {
+          if (apiUrl && apiKey) {
+            await login(apiUrl, apiKey);
+          }
+          setTimeout(() => {
+            navigate('/manager', { replace: true });
+          }, 2000);
+        } catch (loginErr) {
+          console.error('Falha ao autenticar apos ativar licenca:', loginErr);
+          setTimeout(() => {
+            navigate('/manager/login', { replace: true });
+          }, 2000);
+        }
       } else {
         setState('error');
         setErrorMessage(result.message || 'Falha ao ativar licenca.');
@@ -49,7 +61,7 @@ const LicenseCallback: React.FC = () => {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message;
       setErrorMessage(msg || 'Erro ao ativar licenca.');
     }
-  }, [code, apiUrl, apiKey, navigate, setLicenseState]);
+  }, [code, apiUrl, apiKey, navigate, setLicenseState, login]);
 
   useEffect(() => {
     doActivate();

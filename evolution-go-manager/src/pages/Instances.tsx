@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import useInstancesStore from '@/store/instancesStore';
 import { InstanceCard, InstancesHeader, CreateInstanceModal, QRCodeModal, ConnectConfigModal } from '@/components/instances';
 import SendMessageModal from '@/components/instances/SendMessageModal';
+import TestMessageModal from '@/components/instances/TestMessageModal';
 import EmptyState from '@/components/base/EmptyState';
 import type { Instance } from '@/types/instance';
 import * as instancesApi from '@/services/api/instances';
@@ -50,6 +51,13 @@ export default function Instances() {
     confirmationText: '',
   });
   const [sendMessageModal, setSendMessageModal] = useState<{
+    isOpen: boolean;
+    instance: Instance | null;
+  }>({
+    isOpen: false,
+    instance: null,
+  });
+  const [testMessageModal, setTestMessageModal] = useState<{
     isOpen: boolean;
     instance: Instance | null;
   }>({
@@ -325,6 +333,20 @@ export default function Instances() {
     });
   };
 
+  const openTestMessageModal = (instance: Instance) => {
+    setTestMessageModal({
+      isOpen: true,
+      instance,
+    });
+  };
+
+  const closeTestMessageModal = () => {
+    setTestMessageModal({
+      isOpen: false,
+      instance: null,
+    });
+  };
+
   const closeConnectConfigModal = () => {
     setConnectConfigModal({
       isOpen: false,
@@ -462,6 +484,7 @@ export default function Instances() {
                 onConnect={handleConnect}
                 onDisconnect={handleDisconnect}
                 onSendMessage={openSendMessageModal}
+                onTestMessage={openTestMessageModal}
               />
             ))}
           </div>
@@ -495,6 +518,13 @@ export default function Instances() {
         instance={sendMessageModal.instance}
         open={sendMessageModal.isOpen}
         onClose={closeSendMessageModal}
+      />
+
+      {/* Test Interactive Messages Modal */}
+      <TestMessageModal
+        instance={testMessageModal.instance}
+        open={testMessageModal.isOpen}
+        onClose={closeTestMessageModal}
       />
 
       {/* Delete Confirmation Modal */}

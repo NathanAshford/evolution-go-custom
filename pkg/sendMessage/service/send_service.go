@@ -162,89 +162,192 @@ type ContactStruct struct {
 	Quoted       QuotedStruct      `json:"quoted"`
 }
 
+// Button represents a single interactive button for /send/button.
+// The `type` field drives which of the other fields are used:
+//   - reply: uses `displayText` + `id`
+//   - copy:  uses `displayText` + `copyCode`
+//   - url:   uses `displayText` + `url`
+//   - call:  uses `displayText` + `phoneNumber`
+//   - pix:   uses `currency` + `name` + `keyType` + `key` (must be sent alone)
 type Button struct {
-	Type        string `json:"type"`
-	DisplayText string `json:"displayText"`
-	Id          string `json:"id"`
-	CopyCode    string `json:"copyCode"`
-	URL         string `json:"url"`
-	PhoneNumber string `json:"phoneNumber"`
-	Currency    string `json:"currency"`
-	Name        string `json:"name"`
-	KeyType     string `json:"keyType"`
-	Key         string `json:"key"`
+	// Button kind. One of: reply, copy, url, call, pix.
+	Type        string `json:"type" enums:"reply,copy,url,call,pix" example:"reply"`
+	// Label rendered inside the button (reply / copy / url / call). Ignored for pix.
+	DisplayText string `json:"displayText" example:"Quero saber mais"`
+	// Callback payload for `reply` or code-to-copy internal id for `copy`.
+	Id          string `json:"id" example:"btn_info"`
+	// Code placed in the clipboard when type=copy.
+	CopyCode    string `json:"copyCode,omitempty" example:"PROMO2026"`
+	// Target URL when type=url.
+	URL         string `json:"url,omitempty" example:"https://evolutionapi.com"`
+	// Destination phone number (E.164) when type=call.
+	PhoneNumber string `json:"phoneNumber,omitempty" example:"+5582988898565"`
+	// ISO currency code for type=pix (e.g. BRL).
+	Currency    string `json:"currency,omitempty" example:"BRL"`
+	// Merchant display name shown on the Pix sheet.
+	Name        string `json:"name,omitempty" example:"Minha Loja"`
+	// Pix key type. One of: phone, email, cpf, cnpj, random.
+	KeyType     string `json:"keyType,omitempty" enums:"phone,email,cpf,cnpj,random" example:"cpf"`
+	// Pix key value matching the keyType.
+	Key         string `json:"key,omitempty" example:"12345678900"`
 }
 
+// ButtonStruct is the body for POST /send/button.
+//
+// Server-side validation:
+//   - up to 3 `reply` buttons per message;
+//   - `reply` cannot be mixed with any other type;
+//   - `pix` must be the only button in the message.
+//
+// WhatsApp Web rendering quirk (NOT enforced by the server):
+//   - mixing `reply` with CTA buttons (copy/url/call) makes the message invisible on WhatsApp Web;
+//   - safe combinations: only-reply (up to 3) OR grouped CTAs (copy + url + call).
 type ButtonStruct struct {
-	Number       string       `json:"number"`
-	Title        string       `json:"title"`
-	Description  string       `json:"description"`
-	Footer       string       `json:"footer"`
+	// Destination phone number.
+	Number       string       `json:"number" example:"5582988898565"`
+	// Header title (required).
+	Title        string       `json:"title" example:"Oferta especial"`
+	// Body description text (required).
+	Description  string       `json:"description" example:"Confira as condicoes abaixo"`
+	// Footer text (required).
+	Footer       string       `json:"footer" example:"Evolution GO"`
+	// Buttons array. See combination rules on the parent type description.
 	Buttons      []Button     `json:"buttons"`
-	Delay        int32        `json:"delay"`
-	MentionedJID []string     `json:"mentionedJid"`
-	MentionAll   bool         `json:"mentionAll"`
+	// Typing delay (milliseconds) applied before sending the message.
+	Delay        int32        `json:"delay,omitempty" example:"1200"`
+	// JIDs to mention inside the body text.
+	MentionedJID []string     `json:"mentionedJid,omitempty"`
+	// Mention every participant (groups only).
+	MentionAll   bool         `json:"mentionAll,omitempty"`
+	// If false, skips automatic formatting/validation of `number` into a JID.
 	FormatJid    *bool        `json:"formatJid,omitempty"`
-	Quoted       QuotedStruct `json:"quoted"`
+	// Quoted (reply-to) context.
+	Quoted       QuotedStruct `json:"quoted,omitempty"`
 }
 
+// Row is a selectable item inside a list Section.
 type Row struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	RowId       string `json:"rowId"`
+	// Row main label.
+	Title       string `json:"title" example:"Plano Basico"`
+	// Optional secondary line below the title.
+	Description string `json:"description,omitempty" example:"R$ 29,90/mes"`
+	// Callback payload returned when the user taps the row. Auto-generated if empty.
+	RowId       string `json:"rowId,omitempty" example:"plan_basic"`
 }
 
+// Section groups related Rows under an optional title.
 type Section struct {
-	Title string `json:"title"`
+	// Section heading (optional; rendered as a group separator).
+	Title string `json:"title,omitempty" example:"Planos"`
+	// Rows inside this section.
 	Rows  []Row  `json:"rows"`
 }
 
+// ListStruct is the body for POST /send/list.
+//
+// Renders as a single-select menu (legacy ListMessage format — compatible with iOS, Android and WhatsApp Web).
 type ListStruct struct {
-	Number       string       `json:"number"`
-	Title        string       `json:"title"`
-	Description  string       `json:"description"`
-	ButtonText   string       `json:"buttonText"`
-	FooterText   string       `json:"footerText"`
+	// Destination phone number.
+	Number       string       `json:"number" example:"5582988898565"`
+	// Header title (required).
+	Title        string       `json:"title" example:"Nossos planos"`
+	// Body description text (required).
+	Description  string       `json:"description" example:"Escolha o plano ideal para voce"`
+	// Label of the button that opens the list. Defaults to "Ver Menu" when empty.
+	ButtonText   string       `json:"buttonText" example:"Abrir cardapio"`
+	// Footer text (required).
+	FooterText   string       `json:"footerText" example:"Evolution GO"`
+	// Sections with rows. At least one section with one row is required.
 	Sections     []Section    `json:"sections"`
-	Delay        int32        `json:"delay"`
-	MentionedJID []string     `json:"mentionedJid"`
-	MentionAll   bool         `json:"mentionAll"`
+	// Typing delay (milliseconds) applied before sending the message.
+	Delay        int32        `json:"delay,omitempty" example:"1200"`
+	// JIDs to mention inside the body text.
+	MentionedJID []string     `json:"mentionedJid,omitempty"`
+	// Mention every participant (groups only).
+	MentionAll   bool         `json:"mentionAll,omitempty"`
+	// If false, skips automatic formatting/validation of `number` into a JID.
 	FormatJid    *bool        `json:"formatJid,omitempty"`
-	Quoted       QuotedStruct `json:"quoted"`
+	// Quoted (reply-to) context.
+	Quoted       QuotedStruct `json:"quoted,omitempty"`
 }
 
+// CarouselButtonStruct is a button attached to a single carousel card.
+//
+// IMPORTANT — this struct is different from `Button` (used in /send/button):
+// it has NO dedicated `url` or `phoneNumber` fields. For URL and CALL buttons
+// you must put the link / phone number in the `id` field.
+//
+//   - REPLY (default): uses `displayText` + `id` as callback payload.
+//   - URL:   uses `displayText` + `id` (put the URL here).
+//   - CALL:  uses `displayText` + `id` (put the phone number here).
+//   - COPY:  uses `displayText` + `copyCode`.
+//
+// PIX buttons are NOT supported inside carousel cards — use /send/button instead.
+//
+// WhatsApp Web rendering quirk (NOT enforced by the server):
+// avoid mixing REPLY with CTA buttons (URL/CALL/COPY) in the same card —
+// mixed sets do not render on WhatsApp Web. Prefer only-REPLY or only-CTAs per card.
 type CarouselButtonStruct struct {
-	Type        string `json:"type"`
-	DisplayText string `json:"displayText"`
-	Id          string `json:"id"`
-	CopyCode    string `json:"copyCode,omitempty"`
+	// Button kind (case-insensitive). One of: REPLY (default), URL, CALL, COPY.
+	Type        string `json:"type" enums:"REPLY,URL,CALL,COPY,reply,url,call,copy" example:"REPLY"`
+	// Label rendered inside the button.
+	DisplayText string `json:"displayText" example:"Quero saber mais"`
+	// Context-dependent: REPLY payload, URL target (type=URL) or phone number (type=CALL).
+	Id          string `json:"id" example:"card1_info"`
+	// Code placed in the clipboard when type=COPY.
+	CopyCode    string `json:"copyCode,omitempty" example:"PROMO2026"`
 }
 
+// CarouselCardHeaderStruct is the top area of a carousel card.
+// Either `imageUrl` OR `videoUrl` may be provided (image takes precedence when both are set).
 type CarouselCardHeaderStruct struct {
-	Title    string `json:"title"`
-	Subtitle string `json:"subtitle"`
-	ImageUrl string `json:"imageUrl,omitempty"`
+	// Optional visible title above the media.
+	Title    string `json:"title,omitempty" example:"Oferta do dia"`
+	// Optional subtitle rendered below the title.
+	Subtitle string `json:"subtitle,omitempty" example:"Somente hoje"`
+	// Public URL to an image. Downloaded, uploaded to WhatsApp servers and used as card media.
+	ImageUrl string `json:"imageUrl,omitempty" example:"https://picsum.photos/seed/card1/600/400"`
+	// Public URL to a video. Used only when `imageUrl` is empty.
 	VideoUrl string `json:"videoUrl,omitempty"`
 }
 
+// CarouselCardBodyStruct is the text area of a carousel card.
 type CarouselCardBodyStruct struct {
-	Text string `json:"text"`
+	// Main text of the card.
+	Text string `json:"text" example:"Card 1 - Oferta especial"`
 }
 
+// CarouselCardStruct is a single card inside a carousel message.
+// Each card requires at least `header` + `body`.
 type CarouselCardStruct struct {
+	// Card header (media + title/subtitle).
 	Header  CarouselCardHeaderStruct `json:"header"`
+	// Card body text (required).
 	Body    CarouselCardBodyStruct   `json:"body"`
-	Footer  string                   `json:"footer,omitempty"`
+	// Optional footer rendered under the body.
+	Footer  string                   `json:"footer,omitempty" example:"Por tempo limitado"`
+	// Buttons shown on the card. See CarouselButtonStruct for combination rules.
 	Buttons []CarouselButtonStruct   `json:"buttons,omitempty"`
 }
 
+// CarouselStruct is the body for POST /send/carousel.
+//
+// Sends an interactive carousel of swipeable cards. At least one card is required.
+// Each card must have `header` + `body`; button rules are described on CarouselButtonStruct.
 type CarouselStruct struct {
-	Number    string             `json:"number"`
-	Body      string             `json:"body,omitempty"`
-	Footer    string             `json:"footer,omitempty"`
-	Delay     int32              `json:"delay"`
-	FormatJid *bool              `json:"formatJid,omitempty"`
-	Quoted    QuotedStruct       `json:"quoted"`
+	// Destination phone number.
+	Number    string               `json:"number" example:"5582988898565"`
+	// Optional message body shown above the cards.
+	Body      string               `json:"body,omitempty" example:"Confira nossas novidades!"`
+	// Optional message footer shown below the cards.
+	Footer    string               `json:"footer,omitempty" example:"Evolution GO"`
+	// Typing delay (milliseconds) applied before sending the message.
+	Delay     int32                `json:"delay,omitempty" example:"1200"`
+	// If false, skips automatic formatting/validation of `number` into a JID.
+	FormatJid *bool                `json:"formatJid,omitempty"`
+	// Quoted (reply-to) context.
+	Quoted    QuotedStruct         `json:"quoted,omitempty"`
+	// Cards displayed in order. At least one card is required.
 	Cards     []CarouselCardStruct `json:"cards"`
 }
 
