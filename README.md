@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/EvolutionAPI/evolution-go/releases/latest"><img src="https://img.shields.io/github/v/release/EvolutionAPI/evolution-go?include_prereleases&label=version&color=00ffa7" alt="Latest version" /></a>
+  <a href="https://github.com/evolution-foundation/evolution-go/releases/latest"><img src="https://img.shields.io/github/v/release/evolution-foundation/evolution-go?include_prereleases&label=version&color=00ffa7" alt="Latest version" /></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0" /></a>
   <a href="https://docs.evolutionfoundation.com.br"><img src="https://img.shields.io/badge/Docs-evolutionfoundation.com.br-00ffa7" alt="Documentation" /></a>
   <a href="https://evolutionfoundation.com.br/community"><img src="https://img.shields.io/badge/Community-Join%20us-white" alt="Community" /></a>
@@ -34,7 +34,7 @@
 
 ## Part of the Evolution Foundation ecosystem
 
-Evolution Go is one of the messaging engines maintained by Evolution Foundation. It is used as a WhatsApp provider by the [Evo CRM Community](https://github.com/EvolutionAPI/evo-crm-community) and other projects in the ecosystem.
+Evolution Go is one of the messaging engines maintained by Evolution Foundation. It is used as a WhatsApp provider by the [Evo CRM Community](https://github.com/evolution-foundation/evo-crm-community) and other projects in the ecosystem.
 
 ---
 
@@ -56,7 +56,7 @@ Evolution Go is one of the messaging engines maintained by Evolution Foundation.
 ### Docker (recommended)
 
 ```bash
-git clone https://github.com/EvolutionAPI/evolution-go.git
+git clone https://github.com/evolution-foundation/evolution-go.git
 cd evolution-go
 make docker-build
 make docker-run
@@ -65,11 +65,11 @@ make docker-run
 ### Local development
 
 ```bash
-git clone https://github.com/EvolutionAPI/evolution-go.git
+git clone https://github.com/evolution-foundation/evolution-go.git
 cd evolution-go
 
 # Clone whatsmeow dependency
-git clone git@github.com:EvolutionAPI/whatsmeow.git whatsmeow-lib
+git clone git@github.com:evolution-foundation/whatsmeow.git whatsmeow-lib
 
 # Setup, configure and run
 make setup
@@ -242,7 +242,7 @@ For security issues, **do not open a public issue**. Email **suporte@evofoundati
 ## Acknowledgments
 
 - [whatsmeow](https://github.com/tulir/whatsmeow) by [Tulir Asokan](https://github.com/tulir) — WhatsApp protocol library
-- [Evolution API](https://github.com/EvolutionAPI/evolution-api) — Node.js sister project
+- [Evolution API](https://github.com/evolution-foundation/evolution-api) — Node.js sister project
 
 ---
 
