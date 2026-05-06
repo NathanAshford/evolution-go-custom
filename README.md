@@ -1,35 +1,60 @@
+<p align="center">
+  <a href="https://evolutionfoundation.com.br">
+    <img src="./public/hover-evolution.png" alt="Evolution Foundation" />
+  </a>
+</p>
+
 <h1 align="center">Evolution Go</h1>
 
-<div align="center">
+<p align="center">
+  High-performance WhatsApp API built in Go — part of the Evolution Foundation ecosystem.
+</p>
 
-[![Docker Image](https://img.shields.io/badge/Docker-image-blue)](https://hub.docker.com/r/evoapicloud/evolution-go)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
-[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://golang.org/)
-[![GitHub Stars](https://img.shields.io/github/stars/EvolutionAPI/evolution-go)](https://github.com/EvolutionAPI/evolution-go/stargazers)
-[![Documentation](https://img.shields.io/badge/Documentation-Official-green)](https://docs.evolutionfoundation.com.br)
+<p align="center">
+  <a href="https://github.com/EvolutionAPI/evolution-go/releases/latest"><img src="https://img.shields.io/github/v/release/EvolutionAPI/evolution-go?include_prereleases&label=version&color=00ffa7" alt="Latest version" /></a>
+  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0" /></a>
+  <a href="https://docs.evolutionfoundation.com.br"><img src="https://img.shields.io/badge/Docs-evolutionfoundation.com.br-00ffa7" alt="Documentation" /></a>
+  <a href="https://evolutionfoundation.com.br/community"><img src="https://img.shields.io/badge/Community-Join%20us-white" alt="Community" /></a>
+  <a href="https://hub.docker.com/r/evoapicloud/evolution-go"><img src="https://img.shields.io/badge/Docker-evoapicloud-blue" alt="Docker image" /></a>
+</p>
 
-</div>
+<p align="center">
+  <a href="https://evolutionfoundation.com.br">Website</a> &middot;
+  <a href="https://docs.evolutionfoundation.com.br">Documentation</a> &middot;
+  <a href="https://evolutionfoundation.com.br/community">Community</a> &middot;
+  <a href="mailto:suporte@evofoundation.com.br">Support</a>
+</p>
 
-<div align="center"><img src="./public/images/cover.png" width="400"></div>
+<div align="center"><img src="./public/images/cover.png" alt="Evolution Go" width="400" /></div>
+
+---
 
 ## About
 
-Evolution Go is a high-performance WhatsApp API built in Go, part of the [Evolution](https://evolutionfoundation.com.br/) ecosystem. It provides a robust, lightweight solution for WhatsApp integration using the [whatsmeow](https://github.com/tulir/whatsmeow) library.
+**Evolution Go** is a high-performance WhatsApp API built in Go. Part of the Evolution Foundation ecosystem, it provides a robust, lightweight solution for WhatsApp integration using the [whatsmeow](https://github.com/tulir/whatsmeow) library.
+
+## Part of the Evolution Foundation ecosystem
+
+Evolution Go is one of the messaging engines maintained by Evolution Foundation. It is used as a WhatsApp provider by the [Evo CRM Community](https://github.com/EvolutionAPI/evo-crm-community) and other projects in the ecosystem.
+
+---
 
 ## Features
 
-- **High Performance** — Built with Go for minimal resource usage
-- **RESTful API** — Clean, well-documented REST endpoints with Swagger
-- **Real-time Events** — WebSocket, Webhook, AMQP/RabbitMQ and NATS support
-- **Media Support** — Images, videos, audio, documents with MinIO/S3 storage
-- **Message Storage** — Optional PostgreSQL persistence
-- **QR Code Pairing** — Built-in QR code generation for device linking
-- **License Management** — Built-in licensing with registration, activation, and heartbeat
-- **Docker Ready** — Production-ready Docker configuration
+- **High performance** — built with Go for minimal resource usage
+- **RESTful API** — clean, well-documented REST endpoints with Swagger
+- **Real-time events** — WebSocket, Webhook, AMQP/RabbitMQ and NATS support
+- **Media support** — images, videos, audio, documents with MinIO/S3 storage
+- **Message storage** — optional PostgreSQL persistence
+- **QR code pairing** — built-in QR code generation for device linking
+- **License management** — built-in licensing with registration, activation, and heartbeat
+- **Docker ready** — production-ready Docker configuration
+
+---
 
 ## Quick Start
 
-### Docker (Recommended)
+### Docker (recommended)
 
 ```bash
 git clone https://github.com/EvolutionAPI/evolution-go.git
@@ -38,7 +63,7 @@ make docker-build
 make docker-run
 ```
 
-### Local Development
+### Local development
 
 ```bash
 git clone https://github.com/EvolutionAPI/evolution-go.git
@@ -54,6 +79,8 @@ make dev
 ```
 
 > Run `make help` to see all available commands. See [COMMANDS.md](./COMMANDS.md) for detailed workflows.
+
+---
 
 ## Configuration
 
@@ -87,12 +114,14 @@ LOGTYPE=console
 ```
 
 | Variable | Description | Default |
-|----------|-------------|---------|
+|---|---|---|
 | `SERVER_PORT` | Server port | `8080` |
 | `CLIENT_NAME` | Client identifier | `evolution` |
 | `GLOBAL_API_KEY` | API authentication key | **Required** |
 | `DATABASE_SAVE_MESSAGES` | Enable message storage | `false` |
 | `WADEBUG` | WhatsApp debug level | `INFO` |
+
+---
 
 ## License Activation
 
@@ -106,6 +135,8 @@ Evolution Go requires a license to operate. On first run:
 
 The license status persists in the database (`runtime_configs` table). Heartbeats are sent periodically to maintain activation.
 
+---
+
 ## API Documentation
 
 Swagger UI available at:
@@ -117,13 +148,15 @@ http://localhost:8080/swagger/index.html
 ### Key Endpoints
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+|---|---|---|
 | `POST` | `/instance/create` | Create WhatsApp instance |
 | `GET` | `/instance/{name}/qrcode` | Get QR code for pairing |
 | `POST` | `/message/sendText` | Send text message |
 | `POST` | `/message/sendMedia` | Send media message |
 | `GET` | `/instance/{name}/status` | Get instance status |
 | `DELETE` | `/instance/{name}` | Delete instance |
+
+---
 
 ## Project Structure
 
@@ -136,7 +169,7 @@ evolution-go/
 │   ├── message/         # Message handling
 │   ├── sendMessage/     # Message sending
 │   ├── routes/          # HTTP routes
-│   ├── middleware/       # Auth & validation middleware
+│   ├── middleware/      # Auth & validation middleware
 │   ├── config/          # Configuration
 │   ├── events/          # Event producers (AMQP, NATS, Webhook, WS)
 │   └── storage/         # Media storage (MinIO)
@@ -147,78 +180,90 @@ evolution-go/
 └── VERSION
 ```
 
-## Technology Stack
+---
+
+## Tech Stack
 
 | Component | Technology |
-|-----------|-----------|
+|---|---|
 | Language | Go 1.24+ |
-| HTTP Framework | Gin |
+| HTTP framework | Gin |
 | WhatsApp | [whatsmeow](https://github.com/tulir/whatsmeow) |
 | Database | PostgreSQL |
 | ORM | GORM |
-| Message Queue | RabbitMQ, NATS |
-| Object Storage | MinIO/S3 |
+| Message queue | RabbitMQ, NATS |
+| Object storage | MinIO/S3 |
 | Documentation | Swagger/OpenAPI |
 | Container | Docker |
 
-## Documentation & Support
+---
+
+## Documentation
 
 | Resource | Link |
-|----------|------|
-| Website | [evolutionfoundation.com.br](https://evolutionfoundation.com.br/) |
-| Documentation | [docs.evolutionfoundation.com.br](https://docs.evolutionfoundation.com.br/) |
+|---|---|
+| Website | [evolutionfoundation.com.br](https://evolutionfoundation.com.br) |
+| Documentation | [docs.evolutionfoundation.com.br](https://docs.evolutionfoundation.com.br) |
 | Community | [evolutionfoundation.com.br/community](https://evolutionfoundation.com.br/community) |
-| WhatsApp Support | [+55 31 9621-9989](https://wa.me/553196219989) |
-| GitHub Issues | [evolution-go/issues](https://github.com/EvolutionAPI/evolution-go/issues) |
+| Docker Hub | [evoapicloud/evolution-go](https://hub.docker.com/r/evoapicloud/evolution-go) |
+| Changelog | [CHANGELOG.md](./CHANGELOG.md) |
+| Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
+| Security | [SECURITY.md](./SECURITY.md) |
+
+---
 
 ## Hosting
 
 Deploy Evolution Go with optimized infrastructure:
 
 | Product | Link |
-|---------|------|
-| Evolution Go VPS | [Hostgator - Evo Go](https://www.hostgator.com.br/52579-144-3-55.html) |
-| Evolution API VPS | [Hostgator - Evo API](https://www.hostgator.com.br/servidor-vps/hospedagem-evo-api/lp-afiliado) |
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Security
-
-For security concerns, please email: contato@evolution-api.com
-
-## License
-
-Evolution Go is licensed under the Apache License 2.0, with the following additional conditions:
-
-1. **Logo and copyright**: You may not remove or modify the logo or copyright information in the Evolution console or applications when using frontend components.
-
-2. **Usage notification**: If Evolution Go is used as part of any project (including closed-source), a clear notification that Evolution Go is being utilized must be visible to system administrators.
-
-Please contact contato@evolution-api.com for licensing inquiries. Full license details at [apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0).
-
-## Acknowledgments
-
-- [whatsmeow](https://github.com/tulir/whatsmeow) by [tulir](https://github.com/tulir)
-- [Evolution API](https://github.com/EvolutionAPI/evolution-api)
-
-## Telemetry
-
-Evolution Go collects anonymous telemetry data (routes used, API version) to improve the service. No sensitive or personal data is collected.
+|---|---|
+| Evolution Go VPS | [HostGator — Evo Go](https://www.hostgator.com.br/52579-144-3-55.html) |
+| Evolution API VPS | [HostGator — Evo API](https://www.hostgator.com.br/servidor-vps/hospedagem-evo-api/lp-afiliado) |
 
 ---
 
-<div align="center">
+## Telemetry
 
-**Evolution Go** — High-Performance WhatsApp API
+Evolution Go collects anonymous telemetry data (routes used, API version) to help improve the service. **No sensitive or personal data is collected.**
 
-Made with ❤️ by the [Evolution Team](https://evolutionfoundation.com.br/)
+---
 
-© 2025 Evolution Foundation
+## Contributing
 
-</div>
+Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on how to submit issues, propose features, and open pull requests.
+
+Join our [community](https://evolutionfoundation.com.br/community) to discuss ideas and collaborate.
+
+---
+
+## Security
+
+For security issues, **do not open a public issue**. Email **suporte@evofoundation.com.br** or use GitHub's private vulnerability reporting. See [SECURITY.md](./SECURITY.md) for details.
+
+---
+
+## Acknowledgments
+
+- [whatsmeow](https://github.com/tulir/whatsmeow) by [Tulir Asokan](https://github.com/tulir) — WhatsApp protocol library
+- [Evolution API](https://github.com/EvolutionAPI/evolution-api) — Node.js sister project
+
+---
+
+## License
+
+Evolution Go is licensed under the Apache License 2.0, with additional brand-protection conditions (LOGO/copyright preservation and Usage Notification requirement). See [LICENSE](./LICENSE) for full details.
+
+For licensing inquiries, contact **suporte@evofoundation.com.br**.
+
+## Trademarks
+
+"Evolution Foundation", "Evolution" and "Evolution Go" are trademarks of Evolution Foundation. See [TRADEMARKS.md](./TRADEMARKS.md) for the brand assets policy.
+
+Third-party attributions are documented in [NOTICE](./NOTICE).
+
+---
+
+<p align="center">
+  Made by <a href="https://evolutionfoundation.com.br">Evolution Foundation</a> · © 2026
+</p>
