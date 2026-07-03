@@ -10,7 +10,7 @@ body:
       label: Welcome!
       description: '**DO NOT OPEN FOR GENERAL SUPPORT QUESTIONS.**'
       options:
-        - label: Yes, I have searched for similar requests on [GitHub](https://github.com/EvolutionAPI/evolution-go/issues) and found none.
+        - label: Yes, I have searched for similar requests on [GitHub](https://github.com/evolution-foundation/evolution-go/issues) and found none.
           required: true
 
   - type: dropdown

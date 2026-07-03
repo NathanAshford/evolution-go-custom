@@ -3,8 +3,8 @@ package group_handler
 import (
 	"net/http"
 
-	group_service "github.com/EvolutionAPI/evolution-go/pkg/group/service"
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
+	group_service "github.com/evolution-foundation/evolution-go/pkg/group/service"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,6 +20,7 @@ type GroupHandler interface {
 	GetMyGroups(ctx *gin.Context)
 	JoinGroupLink(ctx *gin.Context)
 	LeaveGroup(ctx *gin.Context)
+	UpdateGroupSettings(ctx *gin.Context)
 }
 
 type groupHandler struct {
@@ -469,6 +470,52 @@ func (g *groupHandler) LeaveGroup(ctx *gin.Context) {
 	}
 
 	err = g.groupService.LeaveGroup(data, instance)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
+// Update group settings
+// @Summary Update group settings
+// @Description Update group settings (announcement, not_announcement, locked, unlocked, approval_on, approval_off, admin_add, all_member_add)
+// @Tags Group
+// @Accept json
+// @Produce json
+// @Param message body group_service.UpdateGroupSettingsStruct true "Group data"
+// @Success 200 {object} gin.H "success"
+// @Failure 400 {object} gin.H "Error on validation"
+// @Failure 500 {object} gin.H "Internal server error"
+// @Router /group/settings [post]
+func (g *groupHandler) UpdateGroupSettings(ctx *gin.Context) {
+	getInstance := ctx.MustGet("instance")
+
+	instance, ok := getInstance.(*instance_model.Instance)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "instance not found"})
+		return
+	}
+
+	var data *group_service.UpdateGroupSettingsStruct
+	err := ctx.ShouldBindBodyWithJSON(&data)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if data.GroupJID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "groupJid is required"})
+		return
+	}
+
+	if data.Action == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "action is required"})
+		return
+	}
+
+	err = g.groupService.UpdateGroupSettings(data, instance)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

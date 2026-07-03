@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/EvolutionAPI/evolution-go/pkg/config"
+	"github.com/evolution-foundation/evolution-go/pkg/config"
 	"github.com/gomessguii/logger"
 	"gopkg.in/natefinch/lumberjack.v2"
 )

@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Evolution Passkey Helper",
+  "version": "1.0.0",
+  "description": "Conclui o pareamento por chave de acesso (passkey) do WhatsApp Web para o Evolution GO. Roda apenas em web.whatsapp.com e nao coleta dados.",
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

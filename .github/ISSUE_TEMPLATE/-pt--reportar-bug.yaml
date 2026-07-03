@@ -18,7 +18,7 @@ body:
         **NÃO ABRA UM PROBLEMA PARA PERGUNTAS GERAIS DE SUPORTE.**
 
       options:
-        - label: Sim, pesquisei problemas semelhantes no [GitHub](https://github.com/EvolutionAPI/evolution-go/issues) e não encontrei nenhum.
+        - label: Sim, pesquisei problemas semelhantes no [GitHub](https://github.com/evolution-foundation/evolution-go/issues) e não encontrei nenhum.
           required: true
 
   - type: textarea

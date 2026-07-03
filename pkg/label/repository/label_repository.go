@@ -1,7 +1,7 @@
 package label_repository
 
 import (
-	label_model "github.com/EvolutionAPI/evolution-go/pkg/label/model"
+	label_model "github.com/evolution-foundation/evolution-go/pkg/label/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

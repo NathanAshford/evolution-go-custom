@@ -68,9 +68,6 @@ make docker-run
 git clone https://github.com/evolution-foundation/evolution-go.git
 cd evolution-go
 
-# Clone whatsmeow dependency
-git clone git@github.com:evolution-foundation/whatsmeow.git whatsmeow-lib
-
 # Setup, configure and run
 make setup
 cp .env.example .env
@@ -172,7 +169,6 @@ evolution-go/
 │   ├── config/          # Configuration
 │   ├── events/          # Event producers (AMQP, NATS, Webhook, WS)
 │   └── storage/         # Media storage (MinIO)
-├── whatsmeow-lib/       # WhatsApp protocol library
 ├── docs/                # Swagger documentation
 ├── Dockerfile
 ├── Makefile

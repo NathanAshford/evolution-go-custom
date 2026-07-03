@@ -1,5 +1,60 @@
 # Evolution GO - Changelog
 
+## v0.7.2
+
+**Docker:** `evoapicloud/evolution-go:0.7.2`
+
+### 🆕 New Features
+- **Passkey (WebAuthn) pairing** — support for linking accounts that the WhatsApp
+  server locks behind a **passkey** (the *Shortcake* / CRSC flow). When the
+  server demands a passkey, whatsmeow's `PairPasskeyRequest` is surfaced through a
+  new ceremony flow: the backend mints a short-lived ceremony token, and a bundled
+  browser extension (`passkey-helper`) runs the WebAuthn assertion on the
+  `web.whatsapp.com` origin and posts it back. Three public endpoints drive it:
+  `GET /passkey-ceremony/{token}`, `POST .../response`, `POST .../confirm`. The
+  manager detects the passkey stage and shows an "Abrir WhatsApp Web" button.
+  Confirmation is always manual (never auto-confirm on `SkipHandoffUX`).
+  Configure the public API base via **`PASSKEY_PUBLIC_URL`**. Full guide:
+  `docs/wiki/guias-api/passkey-pairing.md`. Note: there is no headless bypass —
+  the ceremony requires the account owner's real authenticator; the extension is
+  web-only.
+- **Headless license auto-activation** — set `EVOLUTION_OPERATOR_EMAIL` to the
+  email used in your first manual license registration; on startup the service
+  silently calls `/v1/register/auto` and skips the browser flow (falls back to the
+  manual flow if the email isn't registered yet).
+- **Button message media support** — additional media handling for interactive
+  button messages.
+
+### 🔧 Improvements / CI
+- **Dropped the whatsmeow fork — now uses official `go.mau.fi/whatsmeow`.** The
+  project previously vendored a fork (`whatsmeow-lib` submodule) to carry a
+  PostgreSQL pool patch; upstream rejected that patch in favor of `NewWithDB`
+  (app-side config). Removing the fork also pulled in upstream's native passkey
+  support. Pinned to the commit that adds passkeys
+  (`v0.0.0-20260630180629-b572e5bcb92b`). The `sync-releases` workflow no longer
+  re-adds the submodule.
+- **QR pairing consumes `events.QR` directly** instead of `GetQRChannel`. The QR
+  channel auto-confirms passkey on `SkipHandoffUX` and disconnects the socket when
+  codes run out — both break an in-flight passkey ceremony. Connecting without it
+  keeps the socket alive for as long as pairing (QR or passkey) needs. QR rotation
+  now pauses while a passkey ceremony is active.
+- **Public sync fixes** — the release workflow drops the obsolete whatsmeow-lib
+  step, targets `evolution-foundation/*`, and now ships the `passkey-helper`
+  extension to the public repo.
+
+### 🐛 Bug Fixes
+- **`POST /instance/pair` returned an empty `PairingCode`** — the handler
+  swallowed `PairPhone` errors and returned HTTP 200 with `PairingCode: ""`, and
+  the client wasn't connected/awaiting-auth before `PairPhone`. Now starts the
+  instance, waits for the websocket, and surfaces real errors (#21).
+- **`GET /instance/status` returned 400 after a manual disconnect** — now returns
+  200 with the disconnected status instead of erroring until a container restart
+  (#20).
+
+### 🏷️ Org rename
+- Repository references updated from **EvolutionAPI** to **evolution-foundation**
+  (module path, imports, GitHub URLs, submodule URLs).
+
 ## v0.7.1
 
 **Docker:** `evoapicloud/evolution-go:0.7.1`
@@ -34,7 +89,7 @@
 - **WhatsApp Web version cache** — `fetchWhatsAppWebVersion` now caches the result for 1 hour with a mutex instead of issuing one request per instance startup. Thanks @VitorS0uza (#24)
 - **Manager flicker fix** — instance page no longer replaces the list with skeleton cards on every 5s polling cycle (`hasLoaded` flag). Thanks @TBDevMaster (#14), closes #11
 - **`WEBHOOKFILES` → `WEBHOOK_FILES`** — `.env.example`, docker-compose and docs aligned with the env var the runtime actually reads. Thanks @VitorS0uza (#22)
-- **Dependency cleanup** — removed unused `github.com/EvolutionAPI/evo-gate` from `go.mod`
+- **Dependency cleanup** — removed unused `github.com/evolution-foundation/evo-gate` from `go.mod`
 - **whatsmeow-lib** bumped to `0923702fb`
 - **Telemetry removed** — dropped legacy `pkg/telemetry`
 
@@ -278,7 +333,7 @@
 
 - **Docker Hub**: `evoapicloud/evolution-go`
 - **Documentation**: Swagger available at `/swagger/`
-- **GitHub**: [Evolution API Go](https://github.com/EvolutionAPI/evolution-go)
+- **GitHub**: [Evolution API Go](https://github.com/evolution-foundation/evolution-go)
 
 ---
 

@@ -224,7 +224,7 @@ O servidor estará disponível em `http://localhost:4000` com documentação Swa
 
 - **Grupo WhatsApp**: [evolution-api.com/whatsapp](https://evolution-api.com/whatsapp)
 - **Discord**: [evolution-api.com/discord](https://evolution-api.com/discord)
-- **GitHub Issues**: [github.com/EvolutionAPI/evolution-go](https://github.com/EvolutionAPI/evolution-go/issues)
+- **GitHub Issues**: [github.com/evolution-foundation/evolution-go](https://github.com/evolution-foundation/evolution-go/issues)
 - **Documentação**: [doc.evolution-api.com](https://doc.evolution-api.com)
 
 ## Licença

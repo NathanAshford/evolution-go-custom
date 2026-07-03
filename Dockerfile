@@ -7,10 +7,8 @@ WORKDIR /build
 # Copiar apenas arquivos de dependências primeiro para cachear o download
 COPY go.mod go.sum ./
 
-# Copiar whatsmeow-lib que é uma dependência local
-COPY whatsmeow-lib/ ./whatsmeow-lib/
-
-# Agora fazer download das dependências (com replace funcionando)
+# whatsmeow agora vem do proxy oficial (go.mau.fi/whatsmeow, sem replace local) —
+# não há mais submódulo whatsmeow-lib para copiar.
 RUN go mod download
 
 # Copiar o restante do código
@@ -21,7 +19,8 @@ RUN CGO_ENABLED=1 go build -ldflags "-X main.version=${VERSION}" -o server ./cmd
 
 FROM alpine:3.19.1 AS final
 
-RUN apk update && apk add --no-cache tzdata ffmpeg libjpeg-turbo libwebp
+# poppler-utils provides pdftoppm, used to rasterize PDF page 1 for /send/media document thumbnails
+RUN apk update && apk add --no-cache tzdata ffmpeg libjpeg-turbo libwebp poppler-utils
 
 WORKDIR /app
 

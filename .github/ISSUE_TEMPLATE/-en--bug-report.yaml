@@ -18,7 +18,7 @@ body:
         **DO NOT OPEN AN ISSUE FOR GENERAL SUPPORT QUESTIONS.**
 
       options:
-        - label: Yes, I have searched for similar issues on [GitHub](https://github.com/EvolutionAPI/evolution-go/issues) and found none.
+        - label: Yes, I have searched for similar issues on [GitHub](https://github.com/evolution-foundation/evolution-go/issues) and found none.
           required: true
 
   - type: textarea

@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  evolution_go:
+    image: intrategica/evg:1
+    networks:
+      - papi
+    environment:
+      # Servidor
+      SERVER_PORT: 3300
+      CLIENT_NAME: "evolution"
+
+      # Segurança (ALTERE a chave abaixo)
+      GLOBAL_API_KEY: "429683C4C977415CAAFCCE10F7D57E11"
+
+      # Banco de Dados PostgreSQL (serviço 'postgres' já existente)
+      POSTGRES_AUTH_DB: "postgresql://pastorini:pastorini123@postgres:5432/pastorini_api?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://pastorini:pastorini123@postgres:5432/pastorini_api?sslmode=disable"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "pastorini"
+      POSTGRES_PASSWORD: "pastorini123"
+      POSTGRES_DB: "pastorini_api"
+      DATABASE_SAVE_MESSAGES: "false"
+
+      # Logs e Debug
+      WADEBUG: "INFO"
+      LOGTYPE: "console"
+      LOG_DIRECTORY: "/app/logs"
+      LOG_MAX_SIZE: "100"
+      LOG_MAX_BACKUPS: "5"
+      LOG_MAX_AGE: "30"
+      LOG_COMPRESS: "true"
+
+      # Conexão
+      CONNECT_ON_STARTUP: "true"
+      WEBHOOKFILES: "true"
+
+      # Sistema
+      OS_NAME: "Linux"
+
+      # Eventos
+      EVENT_IGNORE_GROUP: "false"
+      EVENT_IGNORE_STATUS: "true"
+
+      # MinIO/S3 (Opcional)
+      MINIO_ENABLED: "false"
+      MINIO_ENDPOINT: ""
+      MINIO_ACCESS_KEY: ""
+      MINIO_SECRET_KEY: ""
+      MINIO_BUCKET: ""
+      MINIO_USE_SSL: "false"
+
+    volumes:
+      - evolution_go_data:/app/dbdata
+      - evolution_go_logs:/app/logs
+
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=papi
+        - traefik.http.routers.evocrm.rule=Host(`evocrm.intrategica.com.br`)
+        - traefik.http.routers.evocrm.entrypoints=websecure
+        - traefik.http.routers.evocrm.tls=true
+        - traefik.http.routers.evocrm.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.evocrm.service=evocrm
+        - traefik.http.services.evocrm.loadbalancer.server.port=3300
+        - traefik.http.services.evocrm.loadbalancer.passHostHeader=true
+
+volumes:
+  evolution_go_data:
+    external: true
+    name: evolution_go_data
+  evolution_go_logs:
+    external: true
+    name: evolution_go_logs
+
+networks:
+  papi:
+    external: true
+    name: papi

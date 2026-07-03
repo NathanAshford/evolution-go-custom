@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
-	poll_model "github.com/EvolutionAPI/evolution-go/pkg/poll/model"
-	poll_service "github.com/EvolutionAPI/evolution-go/pkg/poll/service"
+	logger_wrapper "github.com/evolution-foundation/evolution-go/pkg/logger"
+	poll_model "github.com/evolution-foundation/evolution-go/pkg/poll/model"
+	poll_service "github.com/evolution-foundation/evolution-go/pkg/poll/service"
 	"github.com/gin-gonic/gin"
 )
 

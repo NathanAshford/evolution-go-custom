@@ -3,8 +3,8 @@ package community_handler
 import (
 	"net/http"
 
-	community_service "github.com/EvolutionAPI/evolution-go/pkg/community/service"
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
+	community_service "github.com/evolution-foundation/evolution-go/pkg/community/service"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
 	"github.com/gin-gonic/gin"
 )
 
