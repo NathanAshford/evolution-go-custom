@@ -10,9 +10,10 @@ coverage.*
 .vscode/
 .DS_Store
 
-# Compiled binaries
-evolution-go
-server
+# Compiled binaries (anchored to repo root so they do NOT match the
+# source dirs cmd/evolution-go/ and pkg/server/)
+/evolution-go
+/server
 
 # Frontend (built in Docker)
 manager/dist/
