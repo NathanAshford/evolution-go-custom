@@ -1,0 +1,91 @@
+name: Sync com upstream (NathanAshford)
+
+# Mantem denderson2013-bot/evolution-go-custom em dia com o upstream.
+# Roda 1x por semana (domingo 06:00 UTC) e sob demanda (workflow_dispatch).
+# NUNCA faz force-push: usa merge. Se houver conflito, o job falha SEM
+# sobrescrever nada e abre uma issue avisando pra resolver manualmente,
+# preservando qualquer customizacao nossa.
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'   # domingo 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Fetch + merge do upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do fork (branch main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sincronizar main com upstream
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@83d78e8c4bf524e79b091cf257deba4dee9e60df  # v3.4.3
+        with:
+          target_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          upstream_sync_branch: main
+          upstream_sync_repo: NathanAshford/evolution-go-custom
+          upstream_pull_args: --no-rebase   # merge, nunca rebase/force
+          test_mode: false
+
+      - name: Resultado
+        if: always()
+        run: |
+          echo "has_new_commits = ${{ steps.sync.outputs.has_new_commits }}"
+
+      - name: Abrir issue se o sync falhar (provavel conflito)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = 'Sync com upstream falhou (conflito?) — resolver manual';
+            const body = [
+              'O workflow **Sync com upstream** falhou ao mesclar `NathanAshford/evolution-go-custom` em `main`.',
+              '',
+              'Causa provavel: conflito de merge com customizacoes nossas. NADA foi sobrescrito (sem force-push).',
+              '',
+              `Log da execucao: ${runUrl}`,
+              '',
+              'Para resolver localmente:',
+              '```bash',
+              'git clone https://github.com/denderson2013-bot/evolution-go-custom.git',
+              'cd evolution-go-custom',
+              'git remote add upstream https://github.com/NathanAshford/evolution-go-custom.git',
+              'git fetch upstream',
+              'git merge upstream/main   # resolver conflitos',
+              'git push origin main',
+              '```',
+            ].join('\n');
+            // evita duplicar: reaproveita issue aberta com mesmo titulo
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'sync-upstream'
+            });
+            const hit = existing.data.find(i => i.title === title);
+            if (hit) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: hit.number, body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['sync-upstream']
+              });
+            }
