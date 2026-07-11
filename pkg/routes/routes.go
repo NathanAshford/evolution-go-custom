@@ -7,20 +7,20 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	_ "github.com/EvolutionAPI/evolution-go/docs"
-	call_handler "github.com/EvolutionAPI/evolution-go/pkg/call/handler"
-	chat_handler "github.com/EvolutionAPI/evolution-go/pkg/chat/handler"
-	community_handler "github.com/EvolutionAPI/evolution-go/pkg/community/handler"
-	group_handler "github.com/EvolutionAPI/evolution-go/pkg/group/handler"
-	instance_handler "github.com/EvolutionAPI/evolution-go/pkg/instance/handler"
-	label_handler "github.com/EvolutionAPI/evolution-go/pkg/label/handler"
-	message_handler "github.com/EvolutionAPI/evolution-go/pkg/message/handler"
-	auth_middleware "github.com/EvolutionAPI/evolution-go/pkg/middleware"
-	newsletter_handler "github.com/EvolutionAPI/evolution-go/pkg/newsletter/handler"
-	poll_handler "github.com/EvolutionAPI/evolution-go/pkg/poll/handler"
-	send_handler "github.com/EvolutionAPI/evolution-go/pkg/sendMessage/handler"
-	server_handler "github.com/EvolutionAPI/evolution-go/pkg/server/handler"
-	user_handler "github.com/EvolutionAPI/evolution-go/pkg/user/handler"
+	_ "github.com/evolution-foundation/evolution-go/docs"
+	call_handler "github.com/evolution-foundation/evolution-go/pkg/call/handler"
+	chat_handler "github.com/evolution-foundation/evolution-go/pkg/chat/handler"
+	community_handler "github.com/evolution-foundation/evolution-go/pkg/community/handler"
+	group_handler "github.com/evolution-foundation/evolution-go/pkg/group/handler"
+	instance_handler "github.com/evolution-foundation/evolution-go/pkg/instance/handler"
+	label_handler "github.com/evolution-foundation/evolution-go/pkg/label/handler"
+	message_handler "github.com/evolution-foundation/evolution-go/pkg/message/handler"
+	auth_middleware "github.com/evolution-foundation/evolution-go/pkg/middleware"
+	newsletter_handler "github.com/evolution-foundation/evolution-go/pkg/newsletter/handler"
+	poll_handler "github.com/evolution-foundation/evolution-go/pkg/poll/handler"
+	send_handler "github.com/evolution-foundation/evolution-go/pkg/sendMessage/handler"
+	server_handler "github.com/evolution-foundation/evolution-go/pkg/server/handler"
+	user_handler "github.com/evolution-foundation/evolution-go/pkg/user/handler"
 )
 
 type Routes struct {
@@ -89,7 +89,6 @@ func (r *Routes) AssignRoutes(eng *gin.Engine) {
 			routes.DELETE("/proxy/:instanceId", r.instanceHandler.DeleteProxy)
 			routes.POST("/forcereconnect/:instanceId", r.instanceHandler.ForceReconnect)
 			routes.GET("/logs/:instanceId", r.instanceHandler.GetLogs)
-			routes.GET("/limits/:instanceId", r.instanceHandler.Limits)
 		}
 	}
 
@@ -106,9 +105,6 @@ func (r *Routes) AssignRoutes(eng *gin.Engine) {
 			routes.DELETE("/logout", r.instanceHandler.Logout)
 			routes.GET("/:instanceId/advanced-settings", r.instanceHandler.GetAdvancedSettings)
 			routes.PUT("/:instanceId/advanced-settings", r.instanceHandler.UpdateAdvancedSettings)
-			routes.GET("/webhooks/:instanceId", r.instanceHandler.ListWebhooks)
-			routes.POST("/webhooks/:instanceId", r.instanceHandler.AddWebhook)
-			routes.DELETE("/webhooks/:instanceId", r.instanceHandler.RemoveWebhook)
 		}
 	}
 
@@ -155,6 +151,7 @@ func (r *Routes) AssignRoutes(eng *gin.Engine) {
 			routes.POST("/react", r.jidValidationMiddleware.ValidateJIDFields("number"), r.messageHandler.React)
 			routes.POST("/presence", r.jidValidationMiddleware.ValidateNumberField(), r.messageHandler.ChatPresence)
 			routes.POST("/markread", r.jidValidationMiddleware.ValidateNumberField(), r.messageHandler.MarkRead)
+			routes.POST("/markplayed", r.jidValidationMiddleware.ValidateNumberField(), r.messageHandler.MarkPlayed)
 			routes.POST("/downloadmedia", r.messageHandler.DownloadMedia)
 			routes.POST("/status", r.messageHandler.GetMessageStatus)
 			routes.POST("/delete", r.jidValidationMiddleware.ValidateNumberField(), r.messageHandler.DeleteMessageEveryone)
@@ -189,6 +186,7 @@ func (r *Routes) AssignRoutes(eng *gin.Engine) {
 			routes.GET("/myall", r.groupHandler.GetMyGroups) // TODO: not working
 			routes.POST("/join", r.groupHandler.JoinGroupLink)
 			routes.POST("/leave", r.jidValidationMiddleware.ValidateNumberField(), r.groupHandler.LeaveGroup)
+			routes.POST("/settings", r.jidValidationMiddleware.ValidateNumberField(), r.groupHandler.UpdateGroupSettings)
 		}
 	}
 	routes = eng.Group("/call")

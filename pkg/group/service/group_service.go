@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
-	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
-	"github.com/EvolutionAPI/evolution-go/pkg/utils"
-	whatsmeow_service "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/service"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
+	logger_wrapper "github.com/evolution-foundation/evolution-go/pkg/logger"
+	"github.com/evolution-foundation/evolution-go/pkg/utils"
+	whatsmeow_service "github.com/evolution-foundation/evolution-go/pkg/whatsmeow/service"
 	"github.com/gin-gonic/gin"
 	"github.com/vincent-petithory/dataurl"
 	"go.mau.fi/whatsmeow"
@@ -115,7 +115,6 @@ type UpdateGroupRequestParticipantsStruct struct {
 	Action       string   `json:"action"` // approve, reject
 	Participants []string `json:"participants"`
 }
-
 
 func (g *groupService) ensureClientConnected(instanceId string) (*whatsmeow.Client, error) {
 	client := g.clientPointer[instanceId]

@@ -1,7 +1,7 @@
 package message_repository
 
 import (
-	message_model "github.com/EvolutionAPI/evolution-go/pkg/message/model"
+	message_model "github.com/evolution-foundation/evolution-go/pkg/message/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -17,10 +17,19 @@ type messageRepository struct {
 	db *gorm.DB
 }
 
+func messageUpdateColumns(message message_model.Message) []string {
+	updates := []string{"timestamp", "status", "source"}
+	if len(message.Referral) > 0 {
+		updates = append(updates, "referral")
+	}
+
+	return updates
+}
+
 func (m *messageRepository) InsertMessage(message message_model.Message) error {
 	return m.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "message_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"timestamp", "status", "source"}),
+		DoUpdates: clause.AssignmentColumns(messageUpdateColumns(message)),
 	}).Create(&message).Error
 }
 

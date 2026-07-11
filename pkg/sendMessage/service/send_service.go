@@ -3,6 +3,7 @@ package send_service
 import (
 	"bytes"
 	"context"
+	crypto_rand "crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -19,12 +20,12 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/EvolutionAPI/evolution-go/pkg/config"
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
-	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
-	"github.com/EvolutionAPI/evolution-go/pkg/utils"
-	whatsmeow_service "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/service"
 	"github.com/chai2010/webp"
+	config "github.com/evolution-foundation/evolution-go/pkg/config"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
+	logger_wrapper "github.com/evolution-foundation/evolution-go/pkg/logger"
+	"github.com/evolution-foundation/evolution-go/pkg/utils"
+	whatsmeow_service "github.com/evolution-foundation/evolution-go/pkg/whatsmeow/service"
 	"github.com/gabriel-vasile/mimetype"
 	"go.mau.fi/whatsmeow"
 	waBinary "go.mau.fi/whatsmeow/binary"
@@ -59,14 +60,16 @@ type sendService struct {
 }
 
 type SendDataStruct struct {
-	Id           string
-	Number       string
-	Delay        int32
-	MentionAll   bool
-	MentionedJID []string
-	FormatJid    *bool
-	Quoted       QuotedStruct
-	MediaHandle  string
+	Id              string
+	Number          string
+	Delay           int32
+	MentionAll      bool
+	MentionedJID    []string
+	FormatJid       *bool
+	Quoted          QuotedStruct
+	MediaHandle     string
+	AdditionalNodes *[]waBinary.Node
+	ForwardingScore *uint32
 }
 
 type QuotedStruct struct {
@@ -75,14 +78,15 @@ type QuotedStruct struct {
 }
 
 type TextStruct struct {
-	Number       string       `json:"number"`
-	Text         string       `json:"text"`
-	Id           string       `json:"id"`
-	Delay        int32        `json:"delay"`
-	MentionedJID []string     `json:"mentionedJid"`
-	MentionAll   bool         `json:"mentionAll"`
-	FormatJid    *bool        `json:"formatJid,omitempty"`
-	Quoted       QuotedStruct `json:"quoted"`
+	Number          string       `json:"number"`
+	Text            string       `json:"text"`
+	Id              string       `json:"id"`
+	Delay           int32        `json:"delay"`
+	MentionedJID    []string     `json:"mentionedJid"`
+	MentionAll      bool         `json:"mentionAll"`
+	FormatJid       *bool        `json:"formatJid,omitempty"`
+	Quoted          QuotedStruct `json:"quoted"`
+	ForwardingScore *uint32      `json:"forwardingScore,omitempty"`
 }
 
 type LinkStruct struct {
@@ -101,17 +105,18 @@ type LinkStruct struct {
 }
 
 type MediaStruct struct {
-	Number       string       `json:"number"`
-	Url          string       `json:"url"`
-	Type         string       `json:"type"`
-	Caption      string       `json:"caption"`
-	Filename     string       `json:"filename"`
-	Id           string       `json:"id"`
-	Delay        int32        `json:"delay"`
-	MentionedJID []string     `json:"mentionedJid"`
-	MentionAll   bool         `json:"mentionAll"`
-	FormatJid    *bool        `json:"formatJid,omitempty"`
-	Quoted       QuotedStruct `json:"quoted"`
+	Number          string       `json:"number"`
+	Url             string       `json:"url"`
+	Type            string       `json:"type"`
+	Caption         string       `json:"caption"`
+	Filename        string       `json:"filename"`
+	Id              string       `json:"id"`
+	Delay           int32        `json:"delay"`
+	MentionedJID    []string     `json:"mentionedJid"`
+	MentionAll      bool         `json:"mentionAll"`
+	FormatJid       *bool        `json:"formatJid,omitempty"`
+	Quoted          QuotedStruct `json:"quoted"`
+	ForwardingScore *uint32      `json:"forwardingScore,omitempty"`
 }
 
 type PollStruct struct {
@@ -172,25 +177,25 @@ type ContactStruct struct {
 //   - pix:   uses `currency` + `name` + `keyType` + `key` (must be sent alone)
 type Button struct {
 	// Button kind. One of: reply, copy, url, call, pix.
-	Type        string `json:"type" enums:"reply,copy,url,call,pix" example:"reply"`
+	Type string `json:"type" enums:"reply,copy,url,call,pix" example:"reply"`
 	// Label rendered inside the button (reply / copy / url / call). Ignored for pix.
 	DisplayText string `json:"displayText" example:"Quero saber mais"`
 	// Callback payload for `reply` or code-to-copy internal id for `copy`.
-	Id          string `json:"id" example:"btn_info"`
+	Id string `json:"id" example:"btn_info"`
 	// Code placed in the clipboard when type=copy.
-	CopyCode    string `json:"copyCode,omitempty" example:"PROMO2026"`
+	CopyCode string `json:"copyCode,omitempty" example:"PROMO2026"`
 	// Target URL when type=url.
-	URL         string `json:"url,omitempty" example:"https://evolutionapi.com"`
+	URL string `json:"url,omitempty" example:"https://evolutionapi.com"`
 	// Destination phone number (E.164) when type=call.
 	PhoneNumber string `json:"phoneNumber,omitempty" example:"+5582988898565"`
 	// ISO currency code for type=pix (e.g. BRL).
-	Currency    string `json:"currency,omitempty" example:"BRL"`
+	Currency string `json:"currency,omitempty" example:"BRL"`
 	// Merchant display name shown on the Pix sheet.
-	Name        string `json:"name,omitempty" example:"Minha Loja"`
+	Name string `json:"name,omitempty" example:"Minha Loja"`
 	// Pix key type. One of: phone, email, cpf, cnpj, random.
-	KeyType     string `json:"keyType,omitempty" enums:"phone,email,cpf,cnpj,random" example:"cpf"`
+	KeyType string `json:"keyType,omitempty" enums:"phone,email,cpf,cnpj,random" example:"cpf"`
 	// Pix key value matching the keyType.
-	Key         string `json:"key,omitempty" example:"12345678900"`
+	Key string `json:"key,omitempty" example:"12345678900"`
 }
 
 // ButtonStruct is the body for POST /send/button.
@@ -205,35 +210,39 @@ type Button struct {
 //   - safe combinations: only-reply (up to 3) OR grouped CTAs (copy + url + call).
 type ButtonStruct struct {
 	// Destination phone number.
-	Number       string       `json:"number" example:"5582988898565"`
+	Number string `json:"number" example:"5582988898565"`
 	// Header title (required).
-	Title        string       `json:"title" example:"Oferta especial"`
+	Title string `json:"title" example:"Oferta especial"`
 	// Body description text (required).
-	Description  string       `json:"description" example:"Confira as condicoes abaixo"`
+	Description string `json:"description" example:"Confira as condicoes abaixo"`
 	// Footer text (required).
-	Footer       string       `json:"footer" example:"Evolution GO"`
+	Footer string `json:"footer" example:"Evolution GO"`
 	// Buttons array. See combination rules on the parent type description.
-	Buttons      []Button     `json:"buttons"`
+	Buttons []Button `json:"buttons"`
 	// Typing delay (milliseconds) applied before sending the message.
-	Delay        int32        `json:"delay,omitempty" example:"1200"`
+	Delay int32 `json:"delay,omitempty" example:"1200"`
 	// JIDs to mention inside the body text.
-	MentionedJID []string     `json:"mentionedJid,omitempty"`
+	MentionedJID []string `json:"mentionedJid,omitempty"`
 	// Mention every participant (groups only).
-	MentionAll   bool         `json:"mentionAll,omitempty"`
+	MentionAll bool `json:"mentionAll,omitempty"`
 	// If false, skips automatic formatting/validation of `number` into a JID.
-	FormatJid    *bool        `json:"formatJid,omitempty"`
+	FormatJid *bool `json:"formatJid,omitempty"`
 	// Quoted (reply-to) context.
-	Quoted       QuotedStruct `json:"quoted,omitempty"`
+	Quoted QuotedStruct `json:"quoted,omitempty"`
+	// Optional image URL used as header for reply-only buttons.
+	ImageUrl string `json:"imageUrl,omitempty"`
+	// Optional video URL used as header for reply-only buttons.
+	VideoUrl string `json:"videoUrl,omitempty"`
 }
 
 // Row is a selectable item inside a list Section.
 type Row struct {
 	// Row main label.
-	Title       string `json:"title" example:"Plano Basico"`
+	Title string `json:"title" example:"Plano Basico"`
 	// Optional secondary line below the title.
 	Description string `json:"description,omitempty" example:"R$ 29,90/mes"`
 	// Callback payload returned when the user taps the row. Auto-generated if empty.
-	RowId       string `json:"rowId,omitempty" example:"plan_basic"`
+	RowId string `json:"rowId,omitempty" example:"plan_basic"`
 }
 
 // Section groups related Rows under an optional title.
@@ -241,7 +250,7 @@ type Section struct {
 	// Section heading (optional; rendered as a group separator).
 	Title string `json:"title,omitempty" example:"Planos"`
 	// Rows inside this section.
-	Rows  []Row  `json:"rows"`
+	Rows []Row `json:"rows"`
 }
 
 // ListStruct is the body for POST /send/list.
@@ -249,27 +258,27 @@ type Section struct {
 // Renders as a single-select menu (legacy ListMessage format — compatible with iOS, Android and WhatsApp Web).
 type ListStruct struct {
 	// Destination phone number.
-	Number       string       `json:"number" example:"5582988898565"`
+	Number string `json:"number" example:"5582988898565"`
 	// Header title (required).
-	Title        string       `json:"title" example:"Nossos planos"`
+	Title string `json:"title" example:"Nossos planos"`
 	// Body description text (required).
-	Description  string       `json:"description" example:"Escolha o plano ideal para voce"`
+	Description string `json:"description" example:"Escolha o plano ideal para voce"`
 	// Label of the button that opens the list. Defaults to "Ver Menu" when empty.
-	ButtonText   string       `json:"buttonText" example:"Abrir cardapio"`
+	ButtonText string `json:"buttonText" example:"Abrir cardapio"`
 	// Footer text (required).
-	FooterText   string       `json:"footerText" example:"Evolution GO"`
+	FooterText string `json:"footerText" example:"Evolution GO"`
 	// Sections with rows. At least one section with one row is required.
-	Sections     []Section    `json:"sections"`
+	Sections []Section `json:"sections"`
 	// Typing delay (milliseconds) applied before sending the message.
-	Delay        int32        `json:"delay,omitempty" example:"1200"`
+	Delay int32 `json:"delay,omitempty" example:"1200"`
 	// JIDs to mention inside the body text.
-	MentionedJID []string     `json:"mentionedJid,omitempty"`
+	MentionedJID []string `json:"mentionedJid,omitempty"`
 	// Mention every participant (groups only).
-	MentionAll   bool         `json:"mentionAll,omitempty"`
+	MentionAll bool `json:"mentionAll,omitempty"`
 	// If false, skips automatic formatting/validation of `number` into a JID.
-	FormatJid    *bool        `json:"formatJid,omitempty"`
+	FormatJid *bool `json:"formatJid,omitempty"`
 	// Quoted (reply-to) context.
-	Quoted       QuotedStruct `json:"quoted,omitempty"`
+	Quoted QuotedStruct `json:"quoted,omitempty"`
 }
 
 // CarouselButtonStruct is a button attached to a single carousel card.
@@ -290,20 +299,20 @@ type ListStruct struct {
 // mixed sets do not render on WhatsApp Web. Prefer only-REPLY or only-CTAs per card.
 type CarouselButtonStruct struct {
 	// Button kind (case-insensitive). One of: REPLY (default), URL, CALL, COPY.
-	Type        string `json:"type" enums:"REPLY,URL,CALL,COPY,reply,url,call,copy" example:"REPLY"`
+	Type string `json:"type" enums:"REPLY,URL,CALL,COPY,reply,url,call,copy" example:"REPLY"`
 	// Label rendered inside the button.
 	DisplayText string `json:"displayText" example:"Quero saber mais"`
 	// Context-dependent: REPLY payload, URL target (type=URL) or phone number (type=CALL).
-	Id          string `json:"id" example:"card1_info"`
+	Id string `json:"id" example:"card1_info"`
 	// Code placed in the clipboard when type=COPY.
-	CopyCode    string `json:"copyCode,omitempty" example:"PROMO2026"`
+	CopyCode string `json:"copyCode,omitempty" example:"PROMO2026"`
 }
 
 // CarouselCardHeaderStruct is the top area of a carousel card.
 // Either `imageUrl` OR `videoUrl` may be provided (image takes precedence when both are set).
 type CarouselCardHeaderStruct struct {
 	// Optional visible title above the media.
-	Title    string `json:"title,omitempty" example:"Oferta do dia"`
+	Title string `json:"title,omitempty" example:"Oferta do dia"`
 	// Optional subtitle rendered below the title.
 	Subtitle string `json:"subtitle,omitempty" example:"Somente hoje"`
 	// Public URL to an image. Downloaded, uploaded to WhatsApp servers and used as card media.
@@ -322,13 +331,13 @@ type CarouselCardBodyStruct struct {
 // Each card requires at least `header` + `body`.
 type CarouselCardStruct struct {
 	// Card header (media + title/subtitle).
-	Header  CarouselCardHeaderStruct `json:"header"`
+	Header CarouselCardHeaderStruct `json:"header"`
 	// Card body text (required).
-	Body    CarouselCardBodyStruct   `json:"body"`
+	Body CarouselCardBodyStruct `json:"body"`
 	// Optional footer rendered under the body.
-	Footer  string                   `json:"footer,omitempty" example:"Por tempo limitado"`
+	Footer string `json:"footer,omitempty" example:"Por tempo limitado"`
 	// Buttons shown on the card. See CarouselButtonStruct for combination rules.
-	Buttons []CarouselButtonStruct   `json:"buttons,omitempty"`
+	Buttons []CarouselButtonStruct `json:"buttons,omitempty"`
 }
 
 // CarouselStruct is the body for POST /send/carousel.
@@ -337,19 +346,19 @@ type CarouselCardStruct struct {
 // Each card must have `header` + `body`; button rules are described on CarouselButtonStruct.
 type CarouselStruct struct {
 	// Destination phone number.
-	Number    string               `json:"number" example:"5582988898565"`
+	Number string `json:"number" example:"5582988898565"`
 	// Optional message body shown above the cards.
-	Body      string               `json:"body,omitempty" example:"Confira nossas novidades!"`
+	Body string `json:"body,omitempty" example:"Confira nossas novidades!"`
 	// Optional message footer shown below the cards.
-	Footer    string               `json:"footer,omitempty" example:"Evolution GO"`
+	Footer string `json:"footer,omitempty" example:"Evolution GO"`
 	// Typing delay (milliseconds) applied before sending the message.
-	Delay     int32                `json:"delay,omitempty" example:"1200"`
+	Delay int32 `json:"delay,omitempty" example:"1200"`
 	// If false, skips automatic formatting/validation of `number` into a JID.
-	FormatJid *bool                `json:"formatJid,omitempty"`
+	FormatJid *bool `json:"formatJid,omitempty"`
 	// Quoted (reply-to) context.
-	Quoted    QuotedStruct         `json:"quoted,omitempty"`
+	Quoted QuotedStruct `json:"quoted,omitempty"`
 	// Cards displayed in order. At least one card is required.
-	Cards     []CarouselCardStruct `json:"cards"`
+	Cards []CarouselCardStruct `json:"cards"`
 }
 
 type StatusTextStruct struct {
@@ -615,13 +624,14 @@ func (s *sendService) sendTextWithRetry(data *TextStruct, instance *instance_mod
 		}
 
 		message, err := s.SendMessage(instance, msg, "ExtendedTextMessage", &SendDataStruct{
-			Id:           data.Id,
-			Number:       data.Number,
-			Quoted:       data.Quoted,
-			Delay:        data.Delay,
-			MentionAll:   data.MentionAll,
-			MentionedJID: data.MentionedJID,
-			FormatJid:    data.FormatJid,
+			Id:              data.Id,
+			Number:          data.Number,
+			Quoted:          data.Quoted,
+			Delay:           data.Delay,
+			MentionAll:      data.MentionAll,
+			MentionedJID:    data.MentionedJID,
+			FormatJid:       data.FormatJid,
+			ForwardingScore: data.ForwardingScore,
 		})
 
 		if err != nil {
@@ -1029,15 +1039,20 @@ func (s *sendService) sendMediaFileWithRetry(data *MediaStruct, fileData []byte,
 
 		switch data.Type {
 		case "image":
+			// Generate a JPEG preview thumbnail for better client UX (iOS in
+			// particular). On failure jpegThumb is nil and the message is sent
+			// without a preview rather than failing the request.
+			jpegThumb := makeJPEGThumbnail(fileData, 72)
 			if isNewsletter {
 				// Newsletter: SEM MediaKey e FileEncSHA256
 				media = &waE2E.Message{ImageMessage: &waE2E.ImageMessage{
-					Caption:    proto.String(data.Caption),
-					URL:        &uploaded.URL,
-					DirectPath: &uploaded.DirectPath,
-					Mimetype:   proto.String(mimeType),
-					FileSHA256: uploaded.FileSHA256,
-					FileLength: &uploaded.FileLength,
+					Caption:       proto.String(data.Caption),
+					URL:           &uploaded.URL,
+					DirectPath:    &uploaded.DirectPath,
+					Mimetype:      proto.String(mimeType),
+					FileSHA256:    uploaded.FileSHA256,
+					FileLength:    &uploaded.FileLength,
+					JPEGThumbnail: jpegThumb,
 				}}
 			} else {
 				// Normal: COM MediaKey e FileEncSHA256
@@ -1050,6 +1065,7 @@ func (s *sendService) sendMediaFileWithRetry(data *MediaStruct, fileData []byte,
 					FileEncSHA256: uploaded.FileEncSHA256,
 					FileSHA256:    uploaded.FileSHA256,
 					FileLength:    proto.Uint64(uint64(len(fileData))),
+					JPEGThumbnail: jpegThumb,
 				}}
 			}
 			mediaType = "ImageMessage"
@@ -1123,15 +1139,23 @@ func (s *sendService) sendMediaFileWithRetry(data *MediaStruct, fileData []byte,
 			}
 			mediaType = "AudioMessage"
 		case "document":
+			// For PDF documents, rasterize page 1 into a JPEG preview thumbnail.
+			// A missing pdftoppm or a failure yields nil and the document is
+			// sent without a preview instead of failing the request.
+			var jpegThumb []byte
+			if mimeType == "application/pdf" {
+				jpegThumb = makePDFThumbnail(fileData, 200)
+			}
 			if isNewsletter {
 				media = &waE2E.Message{DocumentMessage: &waE2E.DocumentMessage{
-					FileName:   &data.Filename,
-					Caption:    proto.String(data.Caption),
-					URL:        &uploaded.URL,
-					DirectPath: &uploaded.DirectPath,
-					Mimetype:   proto.String(mimeType),
-					FileSHA256: uploaded.FileSHA256,
-					FileLength: &uploaded.FileLength,
+					FileName:      &data.Filename,
+					Caption:       proto.String(data.Caption),
+					URL:           &uploaded.URL,
+					DirectPath:    &uploaded.DirectPath,
+					Mimetype:      proto.String(mimeType),
+					FileSHA256:    uploaded.FileSHA256,
+					FileLength:    &uploaded.FileLength,
+					JPEGThumbnail: jpegThumb,
 				}}
 			} else {
 				media = &waE2E.Message{DocumentMessage: &waE2E.DocumentMessage{
@@ -1144,6 +1168,7 @@ func (s *sendService) sendMediaFileWithRetry(data *MediaStruct, fileData []byte,
 					FileEncSHA256: uploaded.FileEncSHA256,
 					FileSHA256:    uploaded.FileSHA256,
 					FileLength:    proto.Uint64(uint64(len(fileData))),
+					JPEGThumbnail: jpegThumb,
 				}}
 			}
 
@@ -1162,14 +1187,15 @@ func (s *sendService) sendMediaFileWithRetry(data *MediaStruct, fileData []byte,
 		}
 
 		message, err := s.SendMessage(instance, media, mediaType, &SendDataStruct{
-			Id:           data.Id,
-			Number:       data.Number,
-			Quoted:       data.Quoted,
-			Delay:        data.Delay,
-			MentionAll:   data.MentionAll,
-			MentionedJID: data.MentionedJID,
-			FormatJid:    data.FormatJid,
-			MediaHandle:  uploaded.Handle,
+			Id:              data.Id,
+			Number:          data.Number,
+			Quoted:          data.Quoted,
+			Delay:           data.Delay,
+			MentionAll:      data.MentionAll,
+			MentionedJID:    data.MentionedJID,
+			FormatJid:       data.FormatJid,
+			MediaHandle:     uploaded.Handle,
+			ForwardingScore: data.ForwardingScore,
 		})
 
 		if err != nil {
@@ -1313,15 +1339,20 @@ func (s *sendService) sendMediaUrlWithRetry(data *MediaStruct, instance *instanc
 
 		switch data.Type {
 		case "image":
+			// Generate a JPEG preview thumbnail for better client UX (iOS in
+			// particular). On failure jpegThumb is nil and the message is sent
+			// without a preview rather than failing the request.
+			jpegThumb := makeJPEGThumbnail(fileData, 72)
 			if isNewsletter {
 				// Newsletter: sem criptografia (sem MediaKey e FileEncSHA256)
 				media = &waE2E.Message{ImageMessage: &waE2E.ImageMessage{
-					Caption:    proto.String(data.Caption),
-					URL:        &uploaded.URL,
-					DirectPath: &uploaded.DirectPath,
-					Mimetype:   proto.String(mimeType),
-					FileSHA256: uploaded.FileSHA256,
-					FileLength: &uploaded.FileLength,
+					Caption:       proto.String(data.Caption),
+					URL:           &uploaded.URL,
+					DirectPath:    &uploaded.DirectPath,
+					Mimetype:      proto.String(mimeType),
+					FileSHA256:    uploaded.FileSHA256,
+					FileLength:    &uploaded.FileLength,
+					JPEGThumbnail: jpegThumb,
 				}}
 			} else {
 				// Normal: com criptografia
@@ -1334,6 +1365,7 @@ func (s *sendService) sendMediaUrlWithRetry(data *MediaStruct, instance *instanc
 					FileEncSHA256: uploaded.FileEncSHA256,
 					FileSHA256:    uploaded.FileSHA256,
 					FileLength:    proto.Uint64(uint64(len(fileData))),
+					JPEGThumbnail: jpegThumb,
 				}}
 			}
 			mediaType = "ImageMessage"
@@ -1411,15 +1443,23 @@ func (s *sendService) sendMediaUrlWithRetry(data *MediaStruct, instance *instanc
 			}
 			mediaType = "AudioMessage"
 		case "document":
+			// For PDF documents, rasterize page 1 into a JPEG preview thumbnail.
+			// A missing pdftoppm or a failure yields nil and the document is
+			// sent without a preview instead of failing the request.
+			var jpegThumb []byte
+			if mimeType == "application/pdf" {
+				jpegThumb = makePDFThumbnail(fileData, 200)
+			}
 			if isNewsletter {
 				media = &waE2E.Message{DocumentMessage: &waE2E.DocumentMessage{
-					URL:        &uploaded.URL,
-					FileName:   &data.Filename,
-					Caption:    proto.String(data.Caption),
-					DirectPath: &uploaded.DirectPath,
-					Mimetype:   proto.String(mimeType),
-					FileSHA256: uploaded.FileSHA256,
-					FileLength: &uploaded.FileLength,
+					URL:           &uploaded.URL,
+					FileName:      &data.Filename,
+					Caption:       proto.String(data.Caption),
+					DirectPath:    &uploaded.DirectPath,
+					Mimetype:      proto.String(mimeType),
+					FileSHA256:    uploaded.FileSHA256,
+					FileLength:    &uploaded.FileLength,
+					JPEGThumbnail: jpegThumb,
 				}}
 			} else {
 				media = &waE2E.Message{DocumentMessage: &waE2E.DocumentMessage{
@@ -1432,6 +1472,7 @@ func (s *sendService) sendMediaUrlWithRetry(data *MediaStruct, instance *instanc
 					FileEncSHA256: uploaded.FileEncSHA256,
 					FileSHA256:    uploaded.FileSHA256,
 					FileLength:    proto.Uint64(uint64(len(fileData))),
+					JPEGThumbnail: jpegThumb,
 				}}
 			}
 
@@ -1451,14 +1492,15 @@ func (s *sendService) sendMediaUrlWithRetry(data *MediaStruct, instance *instanc
 
 		messageStart := time.Now()
 		message, err := s.SendMessage(instance, media, mediaType, &SendDataStruct{
-			Id:           data.Id,
-			Number:       data.Number,
-			Quoted:       data.Quoted,
-			Delay:        data.Delay,
-			MentionAll:   data.MentionAll,
-			MentionedJID: data.MentionedJID,
-			FormatJid:    data.FormatJid,
-			MediaHandle:  uploaded.Handle,
+			Id:              data.Id,
+			Number:          data.Number,
+			Quoted:          data.Quoted,
+			Delay:           data.Delay,
+			MentionAll:      data.MentionAll,
+			MentionedJID:    data.MentionedJID,
+			FormatJid:       data.FormatJid,
+			MediaHandle:     uploaded.Handle,
+			ForwardingScore: data.ForwardingScore,
 		})
 
 		if err != nil {
@@ -1738,38 +1780,46 @@ func (s *sendService) SendButton(data *ButtonStruct, instance *instance_model.In
 		switch v.Type {
 		case "reply":
 			name = proto.String("quick_reply")
-			b, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "id": v.Id})
-			paramsJSON = proto.String(string(b))
+			jsonBytes, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "id": v.Id})
+			paramsJSON = proto.String(string(jsonBytes))
 		case "copy":
 			name = proto.String("cta_copy")
-			b, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "copy_code": v.CopyCode})
-			paramsJSON = proto.String(string(b))
+			copyCode := v.CopyCode
+			if copyCode == "" {
+				copyCode = v.Id
+			}
+			copyId := v.Id
+			if copyId == "" {
+				copyId = "copy_" + strconv.FormatInt(time.Now().UnixNano(), 10)
+			}
+			jsonBytes, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "id": copyId, "copy_code": copyCode})
+			paramsJSON = proto.String(string(jsonBytes))
 		case "url":
 			name = proto.String("cta_url")
-			b, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "url": v.URL, "merchant_url": v.URL})
-			paramsJSON = proto.String(string(b))
+			jsonBytes, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "url": v.URL, "merchant_url": v.URL})
+			paramsJSON = proto.String(string(jsonBytes))
 		case "call":
 			name = proto.String("cta_call")
-			b, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "phone_number": v.PhoneNumber})
-			paramsJSON = proto.String(string(b))
+			jsonBytes, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "phone_number": v.PhoneNumber})
+			paramsJSON = proto.String(string(jsonBytes))
 		case "pix":
 			randomId := utils.GenerateRandomString(11)
 			name = proto.String("payment_info")
-			pixParams := map[string]interface{}{
-				"currency": v.Currency,
-				"total_amount": map[string]int{"value": 0, "offset": 100},
+			paymentPayload := map[string]interface{}{
+				"currency":     v.Currency,
+				"total_amount": map[string]interface{}{"value": 0, "offset": 100},
 				"reference_id": randomId,
-				"type": "physical-goods",
+				"type":         "physical-goods",
 				"order": map[string]interface{}{
-					"status": "pending",
-					"subtotal": map[string]int{"value": 0, "offset": 100},
+					"status":     "pending",
+					"subtotal":   map[string]interface{}{"value": 0, "offset": 100},
 					"order_type": "ORDER",
 					"items": []map[string]interface{}{
 						{
-							"name": "",
-							"amount": map[string]int{"value": 0, "offset": 100},
-							"quantity": 0,
-							"sale_amount": map[string]int{"value": 0, "offset": 100},
+							"name":        "",
+							"amount":      map[string]interface{}{"value": 0, "offset": 100},
+							"quantity":    0,
+							"sale_amount": map[string]interface{}{"value": 0, "offset": 100},
 						},
 					},
 				},
@@ -1785,8 +1835,8 @@ func (s *sendService) SendButton(data *ButtonStruct, instance *instance_model.In
 				},
 				"share_payment_status": false,
 			}
-			b, _ := json.Marshal(pixParams)
-			paramsJSON = proto.String(string(b))
+			jsonBytes, _ := json.Marshal(paymentPayload)
+			paramsJSON = proto.String(string(jsonBytes))
 		}
 
 		buttons = append(buttons, &waE2E.InteractiveMessage_NativeFlowMessage_NativeFlowButton{
@@ -1795,24 +1845,124 @@ func (s *sendService) SendButton(data *ButtonStruct, instance *instance_model.In
 		})
 	}
 
-	messageId := client.GenerateMessageID()
 	templateId := strconv.FormatInt(time.Now().UnixNano()/1000000, 10)
 	messageParamsJSON := `{"from":"api","templateId":` + templateId + `}`
 
-	var msg *waE2E.Message
+	// MessageSecret (32 random bytes) — required for iOS to render interactive messages.
+	btnMsgSecret := make([]byte, 32)
+	_, _ = crypto_rand.Read(btnMsgSecret)
 
-	if hasPix {
+	var msg *waE2E.Message
+	var msgType string
+
+	if hasReply && !hasOtherTypes && !hasPix {
+		// Reply-only: native ButtonsMessage wrapped in DocumentWithCaptionMessage (Baileys PR #36).
+		var replyButtons []*waE2E.ButtonsMessage_Button
+		for _, v := range data.Buttons {
+			replyButtons = append(replyButtons, &waE2E.ButtonsMessage_Button{
+				ButtonID: proto.String(v.Id),
+				ButtonText: &waE2E.ButtonsMessage_Button_ButtonText{
+					DisplayText: proto.String(v.DisplayText),
+				},
+				Type: waE2E.ButtonsMessage_Button_RESPONSE.Enum(),
+			})
+		}
+
+		buttonsMsg := &waE2E.ButtonsMessage{
+			ContentText: proto.String(data.Description),
+			FooterText:  proto.String(data.Footer),
+			HeaderType:  waE2E.ButtonsMessage_EMPTY.Enum(),
+			Buttons:     replyButtons,
+		}
+
+		// Optional media header (image or video URL).
+		if data.ImageUrl != "" {
+			if resp, err := http.Get(data.ImageUrl); err == nil {
+				fileData, readErr := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				if readErr == nil {
+					if uploaded, upErr := client.Upload(context.Background(), fileData, whatsmeow.MediaImage); upErr == nil {
+						buttonsMsg.HeaderType = waE2E.ButtonsMessage_IMAGE.Enum()
+						buttonsMsg.Header = &waE2E.ButtonsMessage_ImageMessage{
+							ImageMessage: &waE2E.ImageMessage{
+								URL:           proto.String(uploaded.URL),
+								DirectPath:    proto.String(uploaded.DirectPath),
+								MediaKey:      uploaded.MediaKey,
+								Mimetype:      proto.String("image/jpeg"),
+								FileEncSHA256: uploaded.FileEncSHA256,
+								FileSHA256:    uploaded.FileSHA256,
+								FileLength:    proto.Uint64(uint64(len(fileData))),
+							},
+						}
+					}
+				}
+			}
+		} else if data.VideoUrl != "" {
+			if resp, err := http.Get(data.VideoUrl); err == nil {
+				fileData, readErr := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				if readErr == nil {
+					if uploaded, upErr := client.Upload(context.Background(), fileData, whatsmeow.MediaVideo); upErr == nil {
+						buttonsMsg.HeaderType = waE2E.ButtonsMessage_VIDEO.Enum()
+						buttonsMsg.Header = &waE2E.ButtonsMessage_VideoMessage{
+							VideoMessage: &waE2E.VideoMessage{
+								URL:           proto.String(uploaded.URL),
+								DirectPath:    proto.String(uploaded.DirectPath),
+								MediaKey:      uploaded.MediaKey,
+								Mimetype:      proto.String("video/mp4"),
+								FileEncSHA256: uploaded.FileEncSHA256,
+								FileSHA256:    uploaded.FileSHA256,
+								FileLength:    proto.Uint64(uint64(len(fileData))),
+							},
+						}
+					}
+				}
+			}
+		}
+
 		msg = &waE2E.Message{
-			InteractiveMessage: &waE2E.InteractiveMessage{
-				InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
-					NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
-						Buttons:           buttons,
-						MessageParamsJSON: &messageParamsJSON,
+			DocumentWithCaptionMessage: &waE2E.FutureProofMessage{
+				Message: &waE2E.Message{
+					ButtonsMessage: buttonsMsg,
+				},
+			},
+			MessageContextInfo: &waE2E.MessageContextInfo{
+				MessageSecret: btnMsgSecret,
+			},
+		}
+		msgType = "ButtonsMessage"
+	} else if hasPix {
+		// Pix: NativeFlowMessage wrapped in DocumentWithCaptionMessage.
+		paymentMsgParams := `{"native_flow_name":"order_details","version":1}`
+
+		var interactiveBody *waE2E.InteractiveMessage_Body
+		if data.Title != "" {
+			bodyText := data.Title
+			interactiveBody = &waE2E.InteractiveMessage_Body{Text: &bodyText}
+		}
+
+		msg = &waE2E.Message{
+			DocumentWithCaptionMessage: &waE2E.FutureProofMessage{
+				Message: &waE2E.Message{
+					InteractiveMessage: &waE2E.InteractiveMessage{
+						Body: interactiveBody,
+						InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
+							NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
+								Buttons:           buttons,
+								MessageParamsJSON: &paymentMsgParams,
+								MessageVersion:    proto.Int32(1),
+							},
+						},
 					},
 				},
 			},
+			MessageContextInfo: &waE2E.MessageContextInfo{
+				MessageSecret: btnMsgSecret,
+			},
 		}
+		msgType = "InteractiveMessage"
 	} else {
+		// Mixed CTA buttons (url/copy/call): NativeFlowMessage wrapped in DocumentWithCaptionMessage.
 		body := func() string {
 			t := "*" + data.Title + "*"
 			if data.Description != "" {
@@ -1821,107 +1971,201 @@ func (s *sendService) SendButton(data *ButtonStruct, instance *instance_model.In
 			return t
 		}()
 
-		interactiveMsg := &waE2E.InteractiveMessage{
-			Body: &waE2E.InteractiveMessage_Body{
-				Text: &body,
-			},
-			InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
-				NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
-					Buttons:           buttons,
-					MessageParamsJSON: &messageParamsJSON,
-					MessageVersion:    proto.Int32(1),
+		msg = &waE2E.Message{
+			DocumentWithCaptionMessage: &waE2E.FutureProofMessage{
+				Message: &waE2E.Message{
+					InteractiveMessage: &waE2E.InteractiveMessage{
+						Body: &waE2E.InteractiveMessage_Body{
+							Text: &body,
+						},
+						Footer: &waE2E.InteractiveMessage_Footer{
+							Text: &data.Footer,
+						},
+						InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
+							NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
+								Buttons:           buttons,
+								MessageParamsJSON: &messageParamsJSON,
+								MessageVersion:    proto.Int32(1),
+							},
+						},
+					},
 				},
 			},
-			ContextInfo: &waE2E.ContextInfo{},
+			MessageContextInfo: &waE2E.MessageContextInfo{
+				MessageSecret: btnMsgSecret,
+			},
 		}
-
-		// Footer conditional - only add if not empty (iOS compatibility)
-		if data.Footer != "" {
-			interactiveMsg.Footer = &waE2E.InteractiveMessage_Footer{
-				Text: &data.Footer,
-			}
-		}
-
-		// Header with title
-		if data.Title != "" {
-			interactiveMsg.Header = &waE2E.InteractiveMessage_Header{
-				Title:              proto.String(data.Title),
-				HasMediaAttachment: proto.Bool(false),
-			}
-		}
-
-		msg = &waE2E.Message{
-			InteractiveMessage: interactiveMsg,
-		}
+		msgType = "InteractiveMessage"
 	}
 
-	recipient, err := s.validateAndCheckUserExists(data.Number, data.FormatJid, &data.Quoted.MessageID, &data.Quoted.MessageID, instance)
-	if err != nil {
-		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error validating message fields or user check: %v", instance.Id, err)
-		return nil, err
-	}
-
-	if data.Delay > 0 {
-		err := client.SendChatPresence(context.Background(), recipient, types.ChatPresence("composing"), types.ChatPresenceMedia(""))
-		if err != nil {
-			return nil, err
-		}
-
-		time.Sleep(time.Duration(data.Delay) * time.Millisecond)
-
-		err = client.SendChatPresence(context.Background(), recipient, types.ChatPresence("paused"), types.ChatPresenceMedia(""))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	bizNodes := []waBinary.Node{{
-		Tag: "biz",
-		Content: []waBinary.Node{{
-			Tag:   "interactive",
-			Attrs: waBinary.Attrs{"type": "native_flow", "v": "1"},
+	// Build biz/bot nodes injected directly in the XMPP stanza — required for mobile rendering.
+	// Reply-only buttons get <biz><buttons/></biz>; CTA/Pix get <biz><interactive type="native_flow" v="1"><native_flow name="X"/></interactive></biz>.
+	// The <bot biz_bot="1"/> node is required for 1:1 chats (skipped on groups).
+	var bizInteractiveContent waBinary.Node
+	if hasReply && !hasOtherTypes && !hasPix {
+		bizInteractiveContent = waBinary.Node{
+			Tag: "interactive",
+			Attrs: waBinary.Attrs{
+				"type": "native_flow",
+				"v":    "1",
+			},
 			Content: []waBinary.Node{{
-				Tag:   "native_flow",
-				Attrs: waBinary.Attrs{"v": "9", "name": "mixed"},
+				Tag: "native_flow",
+				Attrs: waBinary.Attrs{
+					"name": "quick_reply",
+				},
 			}},
-		}},
-	}}
-	response, err := client.SendMessage(context.Background(), recipient, msg, whatsmeow.SendRequestExtra{
-		ID:              messageId,
+		}
+	} else if hasPix {
+		bizInteractiveContent = waBinary.Node{
+			Tag: "interactive",
+			Attrs: waBinary.Attrs{
+				"type": "native_flow",
+				"v":    "1",
+			},
+			Content: []waBinary.Node{{
+				Tag: "native_flow",
+				Attrs: waBinary.Attrs{
+					"name": "payment_info",
+				},
+			}},
+		}
+	} else {
+		// Mixed CTA buttons (url/copy/call) — name="mixed" is the WhatsApp convention.
+		bizInteractiveContent = waBinary.Node{
+			Tag: "interactive",
+			Attrs: waBinary.Attrs{
+				"type": "native_flow",
+				"v":    "1",
+			},
+			Content: []waBinary.Node{{
+				Tag: "native_flow",
+				Attrs: waBinary.Attrs{
+					"name": "mixed",
+				},
+			}},
+		}
+	}
+
+	bizNodes := []waBinary.Node{
+		{
+			Tag:     "biz",
+			Content: []waBinary.Node{bizInteractiveContent},
+		},
+	}
+	if !strings.Contains(data.Number, "@g.us") {
+		bizNodes = append(bizNodes, waBinary.Node{
+			Tag:   "bot",
+			Attrs: waBinary.Attrs{"biz_bot": "1"},
+		})
+	}
+
+	// Route through centralized SendMessage for ContextInfo, webhooks, quotes, mentions.
+	message, err := s.SendMessage(instance, msg, msgType, &SendDataStruct{
+		Number:          data.Number,
+		Delay:           data.Delay,
+		MentionAll:      data.MentionAll,
+		MentionedJID:    data.MentionedJID,
+		FormatJid:       data.FormatJid,
+		Quoted:          data.Quoted,
 		AdditionalNodes: &bizNodes,
 	})
 	if err != nil {
+		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error sending button message: %v", instance.Id, err)
 		return nil, err
 	}
 
-	messageInfo := types.MessageInfo{
-		MessageSource: types.MessageSource{
-			Chat:     recipient,
-			Sender:   *client.Store.ID,
-			IsFromMe: true,
-			IsGroup:  false,
-		},
-		ID:        messageId,
-		Timestamp: time.Now(),
-		ServerID:  response.ServerID,
-		Type:      "ButtonMessage",
-	}
-
-	messageSent := &MessageSendStruct{
-		Info:    messageInfo,
-		Message: msg,
-		MessageContextInfo: &waE2E.ContextInfo{
-			StanzaID:      proto.String(data.Quoted.MessageID),
-			Participant:   proto.String(data.Quoted.Participant),
-			QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
-		},
-	}
-
-	return messageSent, nil
+	return message, nil
 }
 
 func stringPointer(s string) *string {
 	return &s
+}
+
+// makeJPEGThumbnail decodes raw image bytes and produces a small JPEG
+// thumbnail suitable for the JPEGThumbnail field of WhatsApp media messages.
+// The thumbnail keeps the original aspect ratio and is capped at maxWidth
+// pixels wide. It returns nil if the image cannot be decoded so callers can
+// fall back to sending the message without a preview thumbnail.
+func makeJPEGThumbnail(fileData []byte, maxWidth int) []byte {
+	if maxWidth < 1 {
+		maxWidth = 72
+	}
+
+	img, _, err := image.Decode(bytes.NewReader(fileData))
+	if err != nil {
+		return nil
+	}
+
+	bounds := img.Bounds()
+	srcWidth := bounds.Dx()
+	srcHeight := bounds.Dy()
+	if srcWidth < 1 || srcHeight < 1 {
+		return nil
+	}
+
+	thumbWidth := maxWidth
+	if srcWidth < thumbWidth {
+		thumbWidth = srcWidth
+	}
+	thumbHeight := int(float64(srcHeight) * float64(thumbWidth) / float64(srcWidth))
+	if thumbHeight < 1 {
+		thumbHeight = 1
+	}
+
+	thumbImg := image.NewRGBA(image.Rect(0, 0, thumbWidth, thumbHeight))
+	for y := 0; y < thumbHeight; y++ {
+		for x := 0; x < thumbWidth; x++ {
+			srcX := x * srcWidth / thumbWidth
+			srcY := y * srcHeight / thumbHeight
+			thumbImg.Set(x, y, img.At(srcX+bounds.Min.X, srcY+bounds.Min.Y))
+		}
+	}
+
+	var thumbBuf bytes.Buffer
+	if err := jpeg.Encode(&thumbBuf, thumbImg, &jpeg.Options{Quality: 50}); err != nil {
+		return nil
+	}
+	return thumbBuf.Bytes()
+}
+
+// makePDFThumbnail rasterizes the first page of a PDF into a JPEG thumbnail
+// using the external "pdftoppm" tool (poppler-utils). It returns nil when
+// pdftoppm is not installed or rasterization fails, so callers can gracefully
+// send the document without a preview instead of failing the request.
+func makePDFThumbnail(fileData []byte, maxWidth int) []byte {
+	if _, err := exec.LookPath("pdftoppm"); err != nil {
+		return nil
+	}
+
+	scaleWidth := maxWidth
+	if scaleWidth < 1 {
+		scaleWidth = 72
+	}
+
+	// Render only the first page to a PNG on stdout, scaled to scaleWidth.
+	// "-scale-to-y -1" keeps the original aspect ratio.
+	cmd := exec.Command("pdftoppm",
+		"-png",
+		"-f", "1",
+		"-l", "1",
+		"-singlefile",
+		"-scale-to-x", strconv.Itoa(scaleWidth),
+		"-scale-to-y", "-1",
+	)
+	cmd.Stdin = bytes.NewReader(fileData)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return nil
+	}
+	if out.Len() == 0 {
+		return nil
+	}
+
+	// Re-encode the rendered PNG as a JPEG thumbnail for consistency with images.
+	return makeJPEGThumbnail(out.Bytes(), maxWidth)
 }
 
 func sectionsToString(data *ListStruct) (string, error) {
@@ -2048,14 +2292,50 @@ func (s *sendService) SendList(data *ListStruct, instance *instance_model.Instan
 		Sections:    sections,
 	}
 
-	// Send as plain ListMessage (NO ViewOnceMessage wrapper) - matching PAPI Node.js
+	// Wrap ListMessage in DocumentWithCaptionMessage (Baileys PR #36) so modern WhatsApp renders it.
+	// MessageSecret (32 random bytes) is required for iOS rendering.
+	listMsgSecret := make([]byte, 32)
+	_, _ = crypto_rand.Read(listMsgSecret)
+
 	msg := &waE2E.Message{
-		ListMessage: listMessage,
+		DocumentWithCaptionMessage: &waE2E.FutureProofMessage{
+			Message: &waE2E.Message{
+				ListMessage: listMessage,
+			},
+		},
+		MessageContextInfo: &waE2E.MessageContextInfo{
+			MessageSecret: listMsgSecret,
+		},
+	}
+
+	// Build biz <list> node — required for mobile rendering of modern lists.
+	listBizNodes := []waBinary.Node{
+		{
+			Tag: "biz",
+			Content: []waBinary.Node{{
+				Tag: "list",
+				Attrs: waBinary.Attrs{
+					"v":    "2",
+					"type": "single_select",
+				},
+			}},
+		},
+	}
+	if !strings.Contains(data.Number, "@g.us") {
+		listBizNodes = append(listBizNodes, waBinary.Node{
+			Tag:   "bot",
+			Attrs: waBinary.Attrs{"biz_bot": "1"},
+		})
 	}
 
 	message, err := s.SendMessage(instance, msg, "ListMessage", &SendDataStruct{
-		Number: data.Number,
-		Delay:  data.Delay,
+		Number:          data.Number,
+		Delay:           data.Delay,
+		MentionAll:      data.MentionAll,
+		MentionedJID:    data.MentionedJID,
+		FormatJid:       data.FormatJid,
+		Quoted:          data.Quoted,
+		AdditionalNodes: &listBizNodes,
 	})
 
 	if err != nil {
@@ -2189,10 +2469,42 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 					Participant:   proto.String(data.Quoted.Participant),
 					QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
 				}
+			} else if msg.DocumentWithCaptionMessage != nil &&
+				msg.DocumentWithCaptionMessage.Message != nil &&
+				msg.DocumentWithCaptionMessage.Message.InteractiveMessage != nil {
+				msg.DocumentWithCaptionMessage.Message.InteractiveMessage.ContextInfo = &waE2E.ContextInfo{
+					StanzaID:      proto.String(data.Quoted.MessageID),
+					Participant:   proto.String(data.Quoted.Participant),
+					QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
+				}
 			}
 		case "ListMessage":
 			if msg.ListMessage != nil {
 				msg.ListMessage.ContextInfo = &waE2E.ContextInfo{
+					StanzaID:      proto.String(data.Quoted.MessageID),
+					Participant:   proto.String(data.Quoted.Participant),
+					QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
+				}
+			} else if msg.DocumentWithCaptionMessage != nil &&
+				msg.DocumentWithCaptionMessage.Message != nil &&
+				msg.DocumentWithCaptionMessage.Message.ListMessage != nil {
+				msg.DocumentWithCaptionMessage.Message.ListMessage.ContextInfo = &waE2E.ContextInfo{
+					StanzaID:      proto.String(data.Quoted.MessageID),
+					Participant:   proto.String(data.Quoted.Participant),
+					QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
+				}
+			}
+		case "ButtonsMessage":
+			if msg.ButtonsMessage != nil {
+				msg.ButtonsMessage.ContextInfo = &waE2E.ContextInfo{
+					StanzaID:      proto.String(data.Quoted.MessageID),
+					Participant:   proto.String(data.Quoted.Participant),
+					QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
+				}
+			} else if msg.DocumentWithCaptionMessage != nil &&
+				msg.DocumentWithCaptionMessage.Message != nil &&
+				msg.DocumentWithCaptionMessage.Message.ButtonsMessage != nil {
+				msg.DocumentWithCaptionMessage.Message.ButtonsMessage.ContextInfo = &waE2E.ContextInfo{
 					StanzaID:      proto.String(data.Quoted.MessageID),
 					Participant:   proto.String(data.Quoted.Participant),
 					QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
@@ -2236,8 +2548,80 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 			// ContextInfo already set in SendCarousel/SendButton/SendList
 		case "ListMessage":
 			// ContextInfo already set in SendList
+		case "ButtonsMessage":
+			// Reply-only buttons: ContextInfo already set in SendButton
 		default:
 			return nil, fmt.Errorf("invalid messageType: %s", messageType)
+		}
+	}
+
+	// Apply ForwardingScore to whichever ContextInfo was set above.
+	// WhatsApp renders "Encaminhada" when ContextInfo.ForwardingScore > 0.
+	if data.ForwardingScore != nil && *data.ForwardingScore > 0 {
+		switch messageType {
+		case "ExtendedTextMessage":
+			if msg.ExtendedTextMessage != nil && msg.ExtendedTextMessage.ContextInfo != nil {
+				msg.ExtendedTextMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.ExtendedTextMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "ImageMessage":
+			if msg.ImageMessage != nil && msg.ImageMessage.ContextInfo != nil {
+				msg.ImageMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.ImageMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "VideoMessage":
+			if msg.VideoMessage != nil && msg.VideoMessage.ContextInfo != nil {
+				msg.VideoMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.VideoMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "PtvMessage":
+			if msg.PtvMessage != nil && msg.PtvMessage.ContextInfo != nil {
+				msg.PtvMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.PtvMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "AudioMessage":
+			if msg.AudioMessage != nil && msg.AudioMessage.ContextInfo != nil {
+				msg.AudioMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.AudioMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "DocumentMessage":
+			if msg.DocumentMessage != nil && msg.DocumentMessage.ContextInfo != nil {
+				msg.DocumentMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.DocumentMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			} else if msg.DocumentWithCaptionMessage != nil && msg.DocumentWithCaptionMessage.Message != nil && msg.DocumentWithCaptionMessage.Message.DocumentMessage != nil && msg.DocumentWithCaptionMessage.Message.DocumentMessage.ContextInfo != nil {
+				msg.DocumentWithCaptionMessage.Message.DocumentMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.DocumentWithCaptionMessage.Message.DocumentMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "PollCreationMessage":
+			if msg.PollCreationMessage != nil && msg.PollCreationMessage.ContextInfo != nil {
+				msg.PollCreationMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.PollCreationMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "StickerMessage":
+			if msg.StickerMessage != nil && msg.StickerMessage.ContextInfo != nil {
+				msg.StickerMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.StickerMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "LocationMessage":
+			if msg.LocationMessage != nil && msg.LocationMessage.ContextInfo != nil {
+				msg.LocationMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.LocationMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "ContactMessage":
+			if msg.ContactMessage != nil && msg.ContactMessage.ContextInfo != nil {
+				msg.ContactMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.ContactMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "InteractiveMessage":
+			if msg.InteractiveMessage != nil && msg.InteractiveMessage.ContextInfo != nil {
+				msg.InteractiveMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.InteractiveMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
+		case "ListMessage":
+			if msg.ListMessage != nil && msg.ListMessage.ContextInfo != nil {
+				msg.ListMessage.ContextInfo.ForwardingScore = data.ForwardingScore
+				msg.ListMessage.ContextInfo.IsForwarded = proto.Bool(true)
+			}
 		}
 	}
 
@@ -2381,20 +2765,9 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 		s.loggerWrapper.GetLogger(instance.Id).LogInfo("[%s] Newsletter detected, using MediaHandle: %s", instance.Id, data.MediaHandle)
 	}
 
-	// InteractiveMessage (carousel, list com NativeFlow) requer biz node para WhatsApp não retornar erro 463
-	if messageType == "InteractiveMessage" {
-		bizNodes := []waBinary.Node{{
-			Tag: "biz",
-			Content: []waBinary.Node{{
-				Tag:   "interactive",
-				Attrs: waBinary.Attrs{"type": "native_flow", "v": "1"},
-				Content: []waBinary.Node{{
-					Tag:   "native_flow",
-					Attrs: waBinary.Attrs{"v": "9", "name": "mixed"},
-				}},
-			}},
-		}}
-		sendExtra.AdditionalNodes = &bizNodes
+	// Injetar nodes biz/bot customizados (PIX, botões interativos, etc.) no stanza XMPP.
+	if data.AdditionalNodes != nil {
+		sendExtra.AdditionalNodes = data.AdditionalNodes
 	}
 
 	response, err := s.clientPointer[instance.Id].SendMessage(context.Background(), recipient, msg, sendExtra)
@@ -2580,41 +2953,19 @@ func (s *sendService) SendCarousel(data *CarouselStruct, instance *instance_mode
 						uploaded, err := client.Upload(context.Background(), fileData, whatsmeow.MediaImage)
 						if err == nil {
 							// Generate JPEG thumbnail for iOS compatibility
-							var jpegThumb []byte
-							img, _, decErr := image.Decode(bytes.NewReader(fileData))
-							if decErr == nil {
-								// Resize to 72px thumbnail
-								bounds := img.Bounds()
-								thumbWidth := 72
-								thumbHeight := int(float64(bounds.Dy()) * float64(thumbWidth) / float64(bounds.Dx()))
-								if thumbHeight < 1 {
-									thumbHeight = 1
-								}
-								thumbImg := image.NewRGBA(image.Rect(0, 0, thumbWidth, thumbHeight))
-								for y := 0; y < thumbHeight; y++ {
-									for x := 0; x < thumbWidth; x++ {
-										srcX := x * bounds.Dx() / thumbWidth
-										srcY := y * bounds.Dy() / thumbHeight
-										thumbImg.Set(x, y, img.At(srcX+bounds.Min.X, srcY+bounds.Min.Y))
-									}
-								}
-								var thumbBuf bytes.Buffer
-								if jpeg.Encode(&thumbBuf, thumbImg, &jpeg.Options{Quality: 50}) == nil {
-									jpegThumb = thumbBuf.Bytes()
-								}
-							}
+							jpegThumb := makeJPEGThumbnail(fileData, 72)
 
 							header.HasMediaAttachment = proto.Bool(true)
 							header.Media = &waE2E.InteractiveMessage_Header_ImageMessage{
 								ImageMessage: &waE2E.ImageMessage{
-									URL:            proto.String(uploaded.URL),
-									DirectPath:     proto.String(uploaded.DirectPath),
-									MediaKey:       uploaded.MediaKey,
-									Mimetype:       proto.String("image/jpeg"),
-									FileEncSHA256:  uploaded.FileEncSHA256,
-									FileSHA256:     uploaded.FileSHA256,
-									FileLength:     proto.Uint64(uint64(len(fileData))),
-									JPEGThumbnail:  jpegThumb,
+									URL:           proto.String(uploaded.URL),
+									DirectPath:    proto.String(uploaded.DirectPath),
+									MediaKey:      uploaded.MediaKey,
+									Mimetype:      proto.String("image/jpeg"),
+									FileEncSHA256: uploaded.FileEncSHA256,
+									FileSHA256:    uploaded.FileSHA256,
+									FileLength:    proto.Uint64(uint64(len(fileData))),
+									JPEGThumbnail: jpegThumb,
 								},
 							}
 						}
@@ -2747,8 +3098,12 @@ func (s *sendService) SendCarousel(data *CarouselStruct, instance *instance_mode
 	// Always set ContextInfo (required for iOS)
 	interactiveMsg.ContextInfo = contextInfo
 
+	// Build final message with MessageContextInfo for proper notification delivery
 	msg := &waE2E.Message{
 		InteractiveMessage: interactiveMsg,
+		MessageContextInfo: &waE2E.MessageContextInfo{
+			DeviceListMetadata: &waE2E.DeviceListMetadata{},
+		},
 	}
 
 	message, err := s.SendMessage(instance, msg, "InteractiveMessage", &SendDataStruct{
@@ -2907,6 +3262,10 @@ func (s *sendService) sendStatusMedia(client *whatsmeow.Client, data *StatusMedi
 
 	switch data.Type {
 	case "image":
+		// Generate a JPEG preview thumbnail so status/story images render an
+		// inline preview instead of the gray camera placeholder. On failure
+		// jpegThumb is nil and the status is posted without a preview.
+		jpegThumb := makeJPEGThumbnail(fileData, 72)
 		media = &waE2E.Message{ImageMessage: &waE2E.ImageMessage{
 			Caption:       proto.String(data.Caption),
 			URL:           proto.String(uploaded.URL),
@@ -2916,6 +3275,7 @@ func (s *sendService) sendStatusMedia(client *whatsmeow.Client, data *StatusMedi
 			FileEncSHA256: uploaded.FileEncSHA256,
 			FileSHA256:    uploaded.FileSHA256,
 			FileLength:    proto.Uint64(uint64(len(fileData))),
+			JPEGThumbnail: jpegThumb,
 		}}
 		mediaType = "ImageMessage"
 	case "video":

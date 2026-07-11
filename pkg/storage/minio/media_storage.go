@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	storage_interfaces "github.com/EvolutionAPI/evolution-go/pkg/storage/interfaces"
+	storage_interfaces "github.com/evolution-foundation/evolution-go/pkg/storage/interfaces"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )

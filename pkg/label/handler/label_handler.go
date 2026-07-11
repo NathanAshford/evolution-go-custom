@@ -3,8 +3,8 @@ package label_handler
 import (
 	"net/http"
 
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
-	label_service "github.com/EvolutionAPI/evolution-go/pkg/label/service"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
+	label_service "github.com/evolution-foundation/evolution-go/pkg/label/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -269,7 +269,7 @@ func (l *labelHandler) MessageUnlabel(ctx *gin.Context) {
 // @Produce json
 // @Success 200 {object} gin.H "success"
 // @Failure 500 {object} gin.H "Internal server error"
-// @Router /label [get]
+// @Router /label/list [get]
 func (l *labelHandler) GetLabels(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
 

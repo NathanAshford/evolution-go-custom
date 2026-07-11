@@ -3,8 +3,8 @@ package call_handler
 import (
 	"net/http"
 
-	call_service "github.com/EvolutionAPI/evolution-go/pkg/call/service"
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
+	call_service "github.com/evolution-foundation/evolution-go/pkg/call/service"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
 	"github.com/gin-gonic/gin"
 )
 

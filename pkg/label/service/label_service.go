@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
-	label_model "github.com/EvolutionAPI/evolution-go/pkg/label/model"
-	label_repository "github.com/EvolutionAPI/evolution-go/pkg/label/repository"
-	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
-	"github.com/EvolutionAPI/evolution-go/pkg/utils"
-	whatsmeow_service "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/service"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
+	label_model "github.com/evolution-foundation/evolution-go/pkg/label/model"
+	label_repository "github.com/evolution-foundation/evolution-go/pkg/label/repository"
+	logger_wrapper "github.com/evolution-foundation/evolution-go/pkg/logger"
+	"github.com/evolution-foundation/evolution-go/pkg/utils"
+	whatsmeow_service "github.com/evolution-foundation/evolution-go/pkg/whatsmeow/service"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/appstate"
 )

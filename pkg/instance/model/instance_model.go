@@ -12,7 +12,6 @@ type Instance struct {
 	Name             string    `json:"name"`
 	Token            string    `json:"token" gorm:"unique"`
 	Webhook          string    `json:"webhook"`
-	Webhooks         []string  `json:"webhooks" gorm:"type:text;serializer:json"`
 	RabbitmqEnable   string    `json:"rabbitmqEnable"`
 	WebSocketEnable  string    `json:"websocketEnable"`
 	NatsEnable       string    `json:"natsEnable"`

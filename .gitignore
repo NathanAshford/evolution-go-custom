@@ -13,9 +13,3 @@ coverage.*
 # Compiled binaries
 evolution-go
 server
-
-# Frontend (built in Docker)
-manager/dist/
-evolution-go-manager/node_modules/
-evolution-go-manager/dist/
-.github/workflows/

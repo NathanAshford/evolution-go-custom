@@ -39,6 +39,10 @@ Sem Coolify, sem painel de controle, sem contas externas. [Detalhes abaixo.](#-i
 - 🩹 **Erro 463 do WhatsApp resolvido** — o tratamento dos tokens NativeFlow
   (`tctoken`/`cstoken`) que fazia botões/carrosséis falharem foi corrigido, então os
   envios interativos chegam de forma confiável.
+- 🔑 **Pareamento por Passkey (WebAuthn)** — suporte ao novo fluxo de passkey do
+  WhatsApp (quando o servidor exige passkey para vincular o aparelho): uma extensão
+  de navegador roda a cerimônia WebAuthn no `web.whatsapp.com` e o instalador já
+  configura a `PASSKEY_PUBLIC_URL` — funciona de fábrica.
 - 🌐 **Proxy por instância** — roteie cada instância por seu próprio proxy `http`,
   `https` ou `socks5` (com ou sem autenticação), definido ou removido **em tempo real** —
   e que vale até no pareamento por QR Code.
@@ -249,8 +253,9 @@ docker compose up -d --build # atualizar após um git pull
 ```
 
 > **Requisitos:** uma VPS Ubuntu 20.04+/Debian 11+ 64-bit. A primeira compilação
-> (Go + o manager em React) usa ~2 GB de RAM — em VPS de 1 GB o instalador **cria
-> swap automaticamente** para não travar. Depois, o consumo de memória em execução é baixo.
+> (do binário Go) usa ~2 GB de RAM — em VPS de 1 GB o instalador **cria swap
+> automaticamente** para não travar. O painel (Manager) já vem pré-compilado, então
+> o build é mais leve. Depois, o consumo de memória em execução é baixo.
 
 Quando estiver no ar, abra a **interface do Manager** em `http://SEU_IP:8080/manager` e a
 **referência interativa da API (Swagger)** em `http://SEU_IP:8080/swagger/index.html`.

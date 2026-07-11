@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
-	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
-	message_model "github.com/EvolutionAPI/evolution-go/pkg/message/model"
-	message_repository "github.com/EvolutionAPI/evolution-go/pkg/message/repository"
-	"github.com/EvolutionAPI/evolution-go/pkg/utils"
-	whatsmeow_service "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/service"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
+	logger_wrapper "github.com/evolution-foundation/evolution-go/pkg/logger"
+	message_model "github.com/evolution-foundation/evolution-go/pkg/message/model"
+	message_repository "github.com/evolution-foundation/evolution-go/pkg/message/repository"
+	"github.com/evolution-foundation/evolution-go/pkg/utils"
+	whatsmeow_service "github.com/evolution-foundation/evolution-go/pkg/whatsmeow/service"
 	"github.com/vincent-petithory/dataurl"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waCommon"
@@ -27,6 +27,7 @@ type MessageService interface {
 	React(data *ReactStruct, instance *instance_model.Instance) (*MessageSendStruct, error)
 	ChatPresence(data *ChatPresenceStruct, instance *instance_model.Instance) (string, error)
 	MarkRead(data *MarkReadStruct, instance *instance_model.Instance) (string, error)
+	MarkPlayed(data *MarkPlayedStruct, instance *instance_model.Instance) (string, error)
 	DownloadMedia(data *DownloadMediaStruct, instance *instance_model.Instance, request *http.Request) (*dataurl.DataURL, string, error)
 	GetMessageStatus(data *MessageStatusStruct, instance *instance_model.Instance) (*message_model.Message, string, error)
 	DeleteMessageEveryone(data *MessageStruct, instance *instance_model.Instance) (string, string, error)
@@ -52,9 +53,18 @@ type ChatPresenceStruct struct {
 	Number  string `json:"number"`
 	State   string `json:"state"`
 	IsAudio bool   `json:"isAudio"`
+	// Delay, in milliseconds, keeps the "composing"/"recording" indicator alive
+	// for the given duration (re-sending it periodically) and then sends "paused".
+	// Only applies when State is "composing". 0 = single fire (legacy behaviour).
+	Delay int `json:"delay"`
 }
 
 type MarkReadStruct struct {
+	Id     []string `json:"id"`
+	Number string   `json:"number"`
+}
+
+type MarkPlayedStruct struct {
 	Id     []string `json:"id"`
 	Number string   `json:"number"`
 }
@@ -137,6 +147,13 @@ func (m *messageService) React(data *ReactStruct, instance *instance_model.Insta
 		return nil, errors.New("invalid phone number")
 	}
 
+	// Strip the "+" that ParseJID/CreateJID adds. The recipient is used both as
+	// the SendMessage target (usync/device resolution) AND as the MessageKey
+	// RemoteJID that references the reacted message's chat. A malformed "+JID"
+	// breaks device resolution (usync) and prevents the reaction from matching
+	// the original message's chat. See utils.CanonicalJID.
+	recipient = utils.CanonicalJID(recipient)
+
 	if data.Id == "" {
 		m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Missing Id in Payload", instance.Id)
 		return nil, errors.New("missing id in payload")
@@ -150,7 +167,8 @@ func (m *messageService) React(data *ReactStruct, instance *instance_model.Insta
 		reaction = ""
 	}
 
-	// Create MessageKey
+	// Create MessageKey — msgId is the ID of the message being reacted to,
+	// NOT the ID of the reaction envelope itself.
 	messageKey := &waCommon.MessageKey{
 		RemoteJID: proto.String(recipient.String()),
 		FromMe:    proto.Bool(fromMe),
@@ -161,22 +179,23 @@ func (m *messageService) React(data *ReactStruct, instance *instance_model.Insta
 	if data.Participant != "" {
 		participantJID, ok := utils.ParseJID(data.Participant)
 		if ok {
-			messageKey.Participant = proto.String(participantJID.String())
+			messageKey.Participant = proto.String(utils.CanonicalJID(participantJID).String())
 		}
 	}
 
 	msg := &waE2E.Message{
 		ReactionMessage: &waE2E.ReactionMessage{
-			Key:  messageKey,
-			Text: proto.String(reaction),
-			// GroupingKey:       proto.String(reaction),
+			Key:               messageKey,
+			Text:              proto.String(reaction),
 			SenderTimestampMS: proto.Int64(time.Now().UnixMilli()),
 		},
 	}
 
-	response, err := client.SendMessage(context.Background(), recipient, msg, whatsmeow.SendRequestExtra{
-		ID: msgId,
-	})
+	// Do NOT pass ID: msgId in SendRequestExtra. Doing so would reuse the
+	// original message ID as the reaction envelope ID; WhatsApp silently
+	// deduplicates it and drops the reaction. Let whatsmeow generate a
+	// fresh, unique ID for the envelope.
+	response, err := client.SendMessage(context.Background(), recipient, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +210,7 @@ func (m *messageService) React(data *ReactStruct, instance *instance_model.Insta
 			IsFromMe: true,
 			IsGroup:  isGroup,
 		},
-		ID:        msgId,
+		ID:        response.ID,
 		Timestamp: time.Now(),
 		ServerID:  response.ServerID,
 		Type:      messageType,
@@ -219,18 +238,70 @@ func (m *messageService) ChatPresence(data *ChatPresenceStruct, instance *instan
 		return "", errors.New("invalid phone number")
 	}
 
+	// chatstate (typing) is a RAW node sent without usync normalization, so it
+	// needs a canonical digits-only JID or WhatsApp silently drops it. See
+	// utils.CanonicalJID for the full rationale.
+	recipient = utils.CanonicalJID(recipient)
+
 	media := ""
 
 	if data.IsAudio {
 		media = "audio"
 	}
 
-	err = client.SendChatPresence(context.Background(), recipient, types.ChatPresence(data.State), types.ChatPresenceMedia(media))
+	// WhatsApp only forwards chatstate (typing / recording) events to the
+	// recipient while the sender is marked online. SendChatPresence merely
+	// sends the chatstate node — it does NOT mark us available. Background
+	// presence handling (events.AppStateSyncComplete) may have set us to
+	// Unavailable, in which case the server silently drops the typing
+	// indicator. Mark ourselves available first to guarantee delivery.
+	if presErr := client.SendPresence(context.Background(), types.PresenceAvailable); presErr != nil {
+		m.loggerWrapper.GetLogger(instance.Id).LogWarn("[%s] SendPresence(available) before chatstate failed (non-fatal): %v", instance.Id, presErr)
+	}
+
+	state := types.ChatPresence(data.State)
+	mediaType := types.ChatPresenceMedia(media)
+
+	err = client.SendChatPresence(context.Background(), recipient, state, mediaType)
 	if err != nil {
 		return "", err
 	}
 
-	m.loggerWrapper.GetLogger(instance.Id).LogInfo("Message sent to %s", data.Number)
+	// A single "composing" indicator is ephemeral: WhatsApp expires it after a
+	// few seconds unless refreshed. When a Delay is provided (and we're typing),
+	// keep the indicator alive for the requested duration by re-sending it, then
+	// send "paused" so the indicator clears cleanly instead of timing out.
+	if data.Delay > 0 && state == types.ChatPresenceComposing {
+		const keepAliveInterval = 5 * time.Second
+		const maxDelay = 60 * time.Second
+
+		remaining := time.Duration(data.Delay) * time.Millisecond
+		if remaining > maxDelay {
+			remaining = maxDelay
+		}
+
+		for remaining > 0 {
+			sleep := keepAliveInterval
+			if remaining < sleep {
+				sleep = remaining
+			}
+			time.Sleep(sleep)
+			remaining -= sleep
+
+			if remaining > 0 {
+				// Refresh the indicator so it doesn't expire mid-delay.
+				if refreshErr := client.SendChatPresence(context.Background(), recipient, state, mediaType); refreshErr != nil {
+					m.loggerWrapper.GetLogger(instance.Id).LogWarn("[%s] Refresh chatstate failed (non-fatal): %v", instance.Id, refreshErr)
+				}
+			}
+		}
+
+		if pausedErr := client.SendChatPresence(context.Background(), recipient, types.ChatPresencePaused, mediaType); pausedErr != nil {
+			m.loggerWrapper.GetLogger(instance.Id).LogWarn("[%s] SendChatPresence(paused) failed (non-fatal): %v", instance.Id, pausedErr)
+		}
+	}
+
+	m.loggerWrapper.GetLogger(instance.Id).LogInfo("Presence (%s) sent to %s", data.State, data.Number)
 
 	return ts.String(), nil
 }
@@ -249,10 +320,41 @@ func (m *messageService) MarkRead(data *MarkReadStruct, instance *instance_model
 		return "", errors.New("invalid phone number")
 	}
 
+	// Read receipts are RAW nodes (no usync) — strip the "+" so the receipt
+	// reaches the recipient. Same root cause as the typing fix above.
+	jid = utils.CanonicalJID(jid)
+
 	err = client.MarkRead(context.Background(), data.Id, time.Now(), jid, jid)
 	if err != nil {
 		m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] error marking message as read: %v", instance.Id, err)
 		return "", errors.New("error marking message as read")
+	}
+
+	return ts.String(), nil
+}
+
+func (m *messageService) MarkPlayed(data *MarkPlayedStruct, instance *instance_model.Instance) (string, error) {
+	client, err := m.ensureClientConnected(instance.Id)
+	if err != nil {
+		return "", err
+	}
+
+	var ts time.Time
+
+	jid, ok := utils.ParseJID(data.Number)
+	if !ok {
+		m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error validating message fields", instance.Id)
+		return "", errors.New("invalid phone number")
+	}
+
+	// Played receipts are RAW nodes (no usync) — strip the "+" so the receipt
+	// reaches the recipient. Same root cause as the MarkRead fix.
+	jid = utils.CanonicalJID(jid)
+
+	err = client.MarkRead(context.Background(), data.Id, time.Now(), jid, jid, types.ReceiptTypePlayed)
+	if err != nil {
+		m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] error marking message as played: %v", instance.Id, err)
+		return "", errors.New("error marking message as played")
 	}
 
 	return ts.String(), nil

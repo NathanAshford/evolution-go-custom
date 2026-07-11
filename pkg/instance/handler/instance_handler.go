@@ -6,10 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	config "github.com/EvolutionAPI/evolution-go/pkg/config"
-	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
-	instance_service "github.com/EvolutionAPI/evolution-go/pkg/instance/service"
-	"github.com/EvolutionAPI/evolution-go/pkg/utils"
+	config "github.com/evolution-foundation/evolution-go/pkg/config"
+	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
+	instance_service "github.com/evolution-foundation/evolution-go/pkg/instance/service"
+	"github.com/evolution-foundation/evolution-go/pkg/utils"
 )
 
 type InstanceHandler interface {
@@ -20,7 +20,6 @@ type InstanceHandler interface {
 	Logout(ctx *gin.Context)
 	Delete(ctx *gin.Context)
 	Status(ctx *gin.Context)
-	Limits(ctx *gin.Context)
 	Qr(ctx *gin.Context)
 	All(ctx *gin.Context)
 	Info(ctx *gin.Context)
@@ -31,9 +30,6 @@ type InstanceHandler interface {
 	GetLogs(ctx *gin.Context)
 	GetAdvancedSettings(ctx *gin.Context)
 	UpdateAdvancedSettings(ctx *gin.Context)
-	AddWebhook(ctx *gin.Context)
-	RemoveWebhook(ctx *gin.Context)
-	ListWebhooks(ctx *gin.Context)
 }
 
 type instanceHandler struct {
@@ -363,7 +359,7 @@ func (i *instanceHandler) All(ctx *gin.Context) {
 // @Success 200 {object} gin.H "Instance"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
-// @Router /instance/get/{instanceId} [get]
+// @Router /instance/info/{instanceId} [get]
 func (i *instanceHandler) Info(ctx *gin.Context) {
 	instanceId := ctx.Param("instanceId")
 
@@ -379,33 +375,6 @@ func (i *instanceHandler) Info(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "success", "data": instance})
-}
-
-// Limits returns WhatsApp's account-level messaging limits (reachout timelock + new-chat
-// quota) for an instance. Used by the UI to show a countdown until a 463 timelock ends.
-// @Summary Get account messaging limits
-// @Description Returns the reachout timelock and new-chat capping info for the instance
-// @Tags Instance
-// @Produce json
-// @Param instanceId path string true "Instance ID"
-// @Success 200 {object} gin.H "Limits"
-// @Failure 500 {object} gin.H "Internal server error"
-// @Router /instance/limits/{instanceId} [get]
-func (i *instanceHandler) Limits(ctx *gin.Context) {
-	instanceId := ctx.Param("instanceId")
-
-	if instanceId == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "instanceId is required"})
-		return
-	}
-
-	limits, err := i.instanceService.GetLimits(instanceId)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "success", "data": limits})
 }
 
 // Delete instance
@@ -569,6 +538,20 @@ type GetLogsQuery struct {
 	Limit     int    `form:"limit"`
 }
 
+// GetLogs returns the log entries for an instance
+// @Summary Get instance logs
+// @Description Returns log entries for an instance, filterable by date range, level and limit
+// @Tags Instance
+// @Produce json
+// @Param instanceId path string true "Instance Id"
+// @Param start_date query string false "Start date (YYYY-MM-DD, defaults to 7 days ago)"
+// @Param end_date query string false "End date (YYYY-MM-DD, defaults to now)"
+// @Param level query string false "Log level filter"
+// @Param limit query int false "Max number of entries"
+// @Success 200 {object} gin.H "Logs"
+// @Failure 400 {object} gin.H "Error on validation"
+// @Failure 500 {object} gin.H "Internal server error"
+// @Router /instance/logs/{instanceId} [get]
 func (h *instanceHandler) GetLogs(c *gin.Context) {
 	instanceId := c.Param("instanceId")
 
@@ -670,62 +653,6 @@ func (h *instanceHandler) UpdateAdvancedSettings(c *gin.Context) {
 		"message":  "Advanced settings updated successfully",
 		"settings": settings,
 	})
-}
-
-func (h *instanceHandler) AddWebhook(c *gin.Context) {
-	instanceId := c.Param("instanceId")
-	if instanceId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "instanceId is required"})
-		return
-	}
-	var body struct {
-		URL string `json:"url" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	instance, err := h.instanceService.AddWebhook(instanceId, body.URL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"webhooks": instance.Webhooks})
-}
-
-func (h *instanceHandler) RemoveWebhook(c *gin.Context) {
-	instanceId := c.Param("instanceId")
-	if instanceId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "instanceId is required"})
-		return
-	}
-	var body struct {
-		URL string `json:"url" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	instance, err := h.instanceService.RemoveWebhook(instanceId, body.URL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"webhooks": instance.Webhooks})
-}
-
-func (h *instanceHandler) ListWebhooks(c *gin.Context) {
-	instanceId := c.Param("instanceId")
-	if instanceId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "instanceId is required"})
-		return
-	}
-	webhooks, err := h.instanceService.ListWebhooks(instanceId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"webhooks": webhooks})
 }
 
 func NewInstanceHandler(instanceService instance_service.InstanceService, config *config.Config) InstanceHandler {

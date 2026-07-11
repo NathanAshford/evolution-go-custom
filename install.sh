@@ -165,6 +165,9 @@ DEPLOY_DIR="${INSTALL_DIR}/deploy"
 [ -f "${DEPLOY_DIR}/docker-compose.yml" ] || die "deploy/docker-compose.yml nao encontrado em ${INSTALL_DIR}."
 
 # ---- 7. Segredos / .env -----------------------------------------------------
+# Detect the public base URL early (used for PASSKEY_PUBLIC_URL and the summary).
+PUBLIC_IP="$(curl -fsS https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo 'SEU_IP')"
+
 ENV_FILE="${DEPLOY_DIR}/.env"
 gen_secret() { openssl rand -hex 24 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'; }
 
@@ -218,6 +221,11 @@ PROXY_PASSWORD=
 
 QRCODE_MAX_COUNT=5
 CHECK_USER_EXISTS=true
+
+# Passkey pairing — public base URL of THIS API (used when WhatsApp requires a
+# passkey to link a device). Defaults to this server's IP; change it to your
+# own domain (with HTTPS) in production. See docs/wiki/guias-api/passkey-pairing.md.
+PASSKEY_PUBLIC_URL=http://${PUBLIC_IP}:${APP_PORT}
 EOF
   chmod 600 "${ENV_FILE}"
   ok "Segredos salvos em ${ENV_FILE} (chmod 600)."
@@ -280,7 +288,7 @@ if [ "${healthy}" != "1" ]; then
 fi
 
 # ---- 11. Resumo -------------------------------------------------------------
-PUBLIC_IP="$(curl -fsS https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo 'SEU_IP')"
+PUBLIC_IP="${PUBLIC_IP:-$(curl -fsS https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo 'SEU_IP')}"
 
 printf '\n%s\n' "${C_BOLD}${C_GREEN}──────────────────────────────────────────────────────────${C_RESET}"
 if [ "${healthy}" = "1" ]; then

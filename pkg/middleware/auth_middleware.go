@@ -3,8 +3,8 @@ package auth_middleware
 import (
 	"net/http"
 
-	"github.com/EvolutionAPI/evolution-go/pkg/config"
-	instance_service "github.com/EvolutionAPI/evolution-go/pkg/instance/service"
+	"github.com/evolution-foundation/evolution-go/pkg/config"
+	instance_service "github.com/evolution-foundation/evolution-go/pkg/instance/service"
 	"github.com/gin-gonic/gin"
 )
 
