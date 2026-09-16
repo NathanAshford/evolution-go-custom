@@ -10,7 +10,7 @@ import {
   DialogTitle,
   Input,
 } from '@evoapi/design-system';
-import { Trash2, Layers } from 'lucide-react';
+import { Trash2, Layers, AlertTriangle, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 import useInstancesStore from '@/store/instancesStore';
@@ -25,7 +25,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Instances() {
   const navigate = useNavigate();
-  const { instances, isLoading, fetchInstances, removeInstance } =
+  const { instances, isLoading, hasLoaded, error, fetchInstances, removeInstance } =
     useInstancesStore();
   const [query, setQuery] = useState('');
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -82,9 +82,11 @@ export default function Instances() {
       initialFetchDone.current = true;
     }
 
-    // Polling: atualizar instâncias a cada 5 segundos
+    // Polling: atualizar instâncias a cada 5 segundos.
+    // `silent` mantém a lista montada durante o refresh — sem ele o grid
+    // desmonta/remonta a cada ciclo, causando o piscar (glitch visual).
     const interval = setInterval(() => {
-      fetchInstances();
+      fetchInstances({ silent: true });
     }, 5000);
 
     return () => clearInterval(interval);
@@ -457,37 +459,72 @@ export default function Instances() {
 
       {/* View Mode Toggle (removed for now, only cards view) */}
 
-      <div className="flex-1 overflow-auto">
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <Skeleton key={idx} className="h-48" />
+      <div className="flex-1 overflow-auto" aria-busy={isLoading && !hasLoaded}>
+        {isLoading && !hasLoaded ? (
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            role="status"
+            aria-label="Carregando instâncias"
+          >
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <Skeleton key={idx} className="h-48 rounded-xl" />
             ))}
+            <span className="sr-only">Carregando instâncias…</span>
+          </div>
+        ) : error && instances.length === 0 ? (
+          <div
+            role="alert"
+            className="flex h-full flex-col items-center justify-center px-4 py-12 text-center"
+          >
+            <div className="mb-4 rounded-full bg-red-500/10 p-6">
+              <AlertTriangle className="h-12 w-12 text-red-500" aria-hidden="true" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-sidebar-foreground dark:text-gray-200">
+              Não foi possível carregar as instâncias
+            </h3>
+            <p className="mb-6 max-w-md text-sm text-sidebar-foreground/60 dark:text-gray-400">
+              {error}
+            </p>
+            <Button onClick={() => fetchInstances()}>
+              <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+              Tentar novamente
+            </Button>
           </div>
         ) : totalCount === 0 ? (
-          <EmptyState
-            icon={Layers}
-            title="Nenhuma instância encontrada"
-            description="Crie sua primeira instância para começar a usar o Evolution GO"
-            action={{ label: 'Nova Instância', onClick: handleNewInstance }}
-            className="h-full"
-          />
+          query ? (
+            <EmptyState
+              icon={Search}
+              title="Nenhum resultado para a busca"
+              description={`Nenhuma instância corresponde a "${query}". Ajuste os termos e tente de novo.`}
+              action={{ label: 'Limpar busca', onClick: () => setQuery('') }}
+              className="h-full"
+            />
+          ) : (
+            <EmptyState
+              icon={Layers}
+              title="Nenhuma instância encontrada"
+              description="Crie sua primeira instância para começar a usar o Evolution GO"
+              action={{ label: 'Nova Instância', onClick: handleNewInstance }}
+              className="h-full"
+            />
+          )
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <ul className="grid list-none grid-cols-1 gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {paginatedInstances.map((instance: Instance) => (
-              <InstanceCard
-                key={instance.instanceName}
-                instance={instance}
-                isDeleting={isDeleting}
-                onSettings={handleSettings}
-                onDelete={openDeleteModal}
-                onConnect={handleConnect}
-                onDisconnect={handleDisconnect}
-                onSendMessage={openSendMessageModal}
-                onTestMessage={openTestMessageModal}
-              />
+              <li key={instance.id || instance.instanceName}>
+                <InstanceCard
+                  instance={instance}
+                  isDeleting={isDeleting}
+                  onSettings={handleSettings}
+                  onDelete={openDeleteModal}
+                  onConnect={handleConnect}
+                  onDisconnect={handleDisconnect}
+                  onSendMessage={openSendMessageModal}
+                  onTestMessage={openTestMessageModal}
+                />
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
 
