@@ -7,6 +7,8 @@ import (
 
 	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
 	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
+	voip_registry "github.com/EvolutionAPI/evolution-go/pkg/voip/registry"
+	whatsmeow_registry "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/registry"
 	whatsmeow_service "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/service"
 	"github.com/gomessguii/logger"
 	"go.mau.fi/whatsmeow"
@@ -15,10 +17,20 @@ import (
 
 type CallService interface {
 	RejectCall(data *RejectCallStruct, instance *instance_model.Instance) error
+
+	// VoIP calls — see voip_service.go.
+	OfferCall(data *OfferCallStruct, instance *instance_model.Instance) (*voip_registry.CallSnapshot, error)
+	AcceptCall(data *CallActionStruct, instance *instance_model.Instance) error
+	TerminateCall(data *CallActionStruct, instance *instance_model.Instance) error
+	RejectCallByID(data *CallActionStruct, instance *instance_model.Instance) error
+	ListCalls(instance *instance_model.Instance) []voip_registry.CallSnapshot
+	CallHistory(instance *instance_model.Instance) []voip_registry.CallSnapshot
+	GetCall(callID string, instance *instance_model.Instance) (*voip_registry.CallSnapshot, error)
+	AttachAudio(callID string, instance *instance_model.Instance, onPeerAudio func([]float32)) (*voip_registry.AudioBridge, error)
 }
 
 type callService struct {
-	clientPointer    map[string]*whatsmeow.Client
+	clientPointer    *whatsmeow_registry.Clients
 	whatsmeowService whatsmeow_service.WhatsmeowService
 	loggerWrapper    *logger_wrapper.LoggerManager
 }
@@ -29,7 +41,7 @@ type RejectCallStruct struct {
 }
 
 func (c *callService) ensureClientConnected(instanceId string) (*whatsmeow.Client, error) {
-	client := c.clientPointer[instanceId]
+	client := c.clientPointer.Get(instanceId)
 	c.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Checking client connection status - Client exists: %v", instanceId, client != nil)
 
 	if client == nil {
@@ -43,7 +55,7 @@ func (c *callService) ensureClientConnected(instanceId string) (*whatsmeow.Clien
 		c.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Instance started, waiting 2 seconds...", instanceId)
 		time.Sleep(2 * time.Second)
 
-		client = c.clientPointer[instanceId]
+		client = c.clientPointer.Get(instanceId)
 		c.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Checking new client - Exists: %v, Connected: %v",
 			instanceId,
 			client != nil,
@@ -83,7 +95,7 @@ func (c *callService) RejectCall(data *RejectCallStruct, instance *instance_mode
 }
 
 func NewCallService(
-	clientPointer map[string]*whatsmeow.Client,
+	clientPointer *whatsmeow_registry.Clients,
 	whatsmeowService whatsmeow_service.WhatsmeowService,
 	loggerWrapper *logger_wrapper.LoggerManager,
 ) CallService {

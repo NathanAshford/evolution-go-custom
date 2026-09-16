@@ -38,6 +38,7 @@ func NewPollHandler(pollService poll_service.PollService, loggerWrapper *logger_
 // @Failure 400 {object} gin.H
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
+// @Security ApiKeyAuth
 // @Router /polls/{pollMessageId}/results [get]
 func (h *PollHandler) GetPollResults(c *gin.Context) {
 	pollMessageID := c.Param("pollMessageId")

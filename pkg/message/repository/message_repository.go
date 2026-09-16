@@ -11,6 +11,12 @@ type MessageRepository interface {
 	GetMessageByID(messageID string) (*message_model.Message, error)
 	DeleteAllMessages() (int64, error)
 	GetLatestMessageID(source string) (string, string, error)
+
+	// Searchable message archive — see archive_repository.go.
+	ArchiveMessage(msg message_model.ArchivedMessage) error
+	SearchMessages(filter message_model.MessageSearchFilter) ([]message_model.ArchivedMessage, int64, error)
+	GetArchivedMessage(instanceID, messageID string) (*message_model.ArchivedMessage, error)
+	ListChats(instanceID string, limit int) ([]message_model.ChatSummary, error)
 }
 
 type messageRepository struct {

@@ -32,6 +32,7 @@ type chatHandler struct {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /chat/pin [post]
 func (c *chatHandler) ChatPin(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -77,6 +78,7 @@ func (c *chatHandler) ChatPin(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /chat/unpin [post]
 func (c *chatHandler) ChatUnpin(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -122,6 +124,7 @@ func (c *chatHandler) ChatUnpin(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /chat/archive [post]
 func (c *chatHandler) ChatArchive(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -167,6 +170,7 @@ func (c *chatHandler) ChatArchive(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /chat/unarchive [post]
 func (c *chatHandler) ChatUnarchive(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -212,6 +216,7 @@ func (c *chatHandler) ChatUnarchive(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /chat/mute [post]
 func (c *chatHandler) ChatMute(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -257,6 +262,7 @@ func (c *chatHandler) ChatMute(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /chat/unmute [post]
 func (c *chatHandler) ChatUnmute(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -302,7 +308,8 @@ func (c *chatHandler) ChatUnmute(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
-// @Router /chat/history-sync-request [post]
+// @Security ApiKeyAuth
+// @Router /chat/history-sync [post]
 func (c *chatHandler) HistorySyncRequest(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
 

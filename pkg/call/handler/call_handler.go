@@ -10,6 +10,16 @@ import (
 
 type CallHandler interface {
 	RejectCall(ctx *gin.Context)
+
+	// VoIP calls — see voip_handler.go.
+	OfferCall(ctx *gin.Context)
+	AcceptCall(ctx *gin.Context)
+	TerminateCall(ctx *gin.Context)
+	HangupCall(ctx *gin.Context)
+	ListCalls(ctx *gin.Context)
+	CallHistory(ctx *gin.Context)
+	GetCall(ctx *gin.Context)
+	StreamAudio(ctx *gin.Context)
 }
 
 type callHandler struct {
@@ -25,6 +35,7 @@ type callHandler struct {
 // @Param message body call_service.RejectCallStruct true "Call data"
 // @Success 200 {object} gin.H "success"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /call/reject [post]
 func (g *callHandler) RejectCall(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")

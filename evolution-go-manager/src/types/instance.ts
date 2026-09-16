@@ -5,6 +5,16 @@
 
 export type InstanceStatus = 'open' | 'close';
 
+// Proxy configuration saved for an instance. Returned by the admin-only
+// /instance/all, /instance/info and /instance/proxy/:id routes.
+export interface ProxyInfo {
+  host: string;
+  port: string;
+  username?: string;
+  password?: string;
+  protocol?: string;
+}
+
 // Raw instance from Evolution GO API
 export interface RawInstance {
   id: string;
@@ -56,6 +66,7 @@ export interface Instance {
   events?: string;
   connected: boolean;
   disconnectReason?: string;
+  proxy?: ProxyInfo;
   createdAt?: string;
   updatedAt?: string;
   alwaysOnline?: boolean;

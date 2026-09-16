@@ -11,6 +11,7 @@ import (
 	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
 	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
 	"github.com/EvolutionAPI/evolution-go/pkg/utils"
+	whatsmeow_registry "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/registry"
 	whatsmeow_service "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/service"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/types"
@@ -33,7 +34,7 @@ type UserService interface {
 }
 
 type userService struct {
-	clientPointer    map[string]*whatsmeow.Client
+	clientPointer    *whatsmeow_registry.Clients
 	whatsmeowService whatsmeow_service.WhatsmeowService
 	loggerWrapper    *logger_wrapper.LoggerManager
 }
@@ -109,7 +110,7 @@ type PrivacyStruct struct {
 }
 
 func (u *userService) ensureClientConnected(instanceId string) (*whatsmeow.Client, error) {
-	client := u.clientPointer[instanceId]
+	client := u.clientPointer.Get(instanceId)
 	u.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Checking client connection status - Client exists: %v", instanceId, client != nil)
 
 	if client == nil {
@@ -123,7 +124,7 @@ func (u *userService) ensureClientConnected(instanceId string) (*whatsmeow.Clien
 		u.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Instance started, waiting 2 seconds...", instanceId)
 		time.Sleep(2 * time.Second)
 
-		client = u.clientPointer[instanceId]
+		client = u.clientPointer.Get(instanceId)
 		u.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Checking new client - Exists: %v, Connected: %v",
 			instanceId,
 			client != nil,
@@ -532,7 +533,12 @@ func (u *userService) SetProfileStatus(data *SetProfileStatusStruct, instance *i
 		return false, err
 	}
 
-	err = client.SetStatusMessage(context.Background(), data.Status)
+	// whatsmeow now takes a struct here instead of a bare string, so the profile
+	// status can carry an emoji and an expiry alongside the text. The API only
+	// exposes the text, which keeps the previous behaviour.
+	err = client.SetStatusMessage(context.Background(), types.SetStatusInput{
+		Text: &data.Status,
+	})
 	if err != nil {
 		return false, err
 	}
@@ -541,7 +547,7 @@ func (u *userService) SetProfileStatus(data *SetProfileStatusStruct, instance *i
 }
 
 func NewUserService(
-	clientPointer map[string]*whatsmeow.Client,
+	clientPointer *whatsmeow_registry.Clients,
 	whatsmeowService whatsmeow_service.WhatsmeowService,
 	loggerWrapper *logger_wrapper.LoggerManager,
 ) UserService {

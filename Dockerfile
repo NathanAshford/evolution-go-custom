@@ -1,19 +1,23 @@
+FROM node:22-alpine AS frontend
+
+RUN npm install -g pnpm@9
+
+WORKDIR /frontend
+COPY evolution-go-manager/package.json evolution-go-manager/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY evolution-go-manager/ ./
+RUN pnpm run build
+
 FROM golang:1.25.0-alpine AS build
 
 RUN apk update && apk add --no-cache git build-base libjpeg-turbo-dev libwebp-dev
 
 WORKDIR /build
 
-# Copiar apenas arquivos de dependências primeiro para cachear o download
 COPY go.mod go.sum ./
-
-# Copiar whatsmeow-lib que é uma dependência local
-COPY whatsmeow-lib/ ./whatsmeow-lib/
-
-# Agora fazer download das dependências (com replace funcionando)
 RUN go mod download
 
-# Copiar o restante do código
 COPY . .
 
 ARG VERSION=dev
@@ -26,7 +30,7 @@ RUN apk update && apk add --no-cache tzdata ffmpeg libjpeg-turbo libwebp
 WORKDIR /app
 
 COPY --from=build /build/server .
-COPY --from=build /build/manager/dist ./manager/dist
+COPY --from=frontend /frontend/dist ./manager/dist
 COPY --from=build /build/VERSION ./VERSION
 
 ENV TZ=America/Sao_Paulo

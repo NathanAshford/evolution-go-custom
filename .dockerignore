@@ -22,6 +22,14 @@ Thumbs.db
 server
 build/
 
+# Dependências do frontend: nunca copiar node_modules do host para o build.
+# O stage `frontend` roda `pnpm install` dentro da imagem; copiar a árvore
+# local por cima quebra o build (conflito de cache do buildkit) e ainda
+# arrastaria binários compilados para a plataforma errada.
+evolution-go-manager/node_modules/
+evolution-go-manager/dist/
+node_modules/
+
 # Docker
 Dockerfile
 .dockerignore

@@ -32,6 +32,7 @@ type messageHandler struct {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /message/react [post]
 func (m *messageHandler) React(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -78,6 +79,7 @@ func (m *messageHandler) React(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /message/presence [post]
 func (m *messageHandler) ChatPresence(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -128,6 +130,7 @@ func (m *messageHandler) ChatPresence(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /message/markread [post]
 func (m *messageHandler) MarkRead(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -178,7 +181,8 @@ func (m *messageHandler) MarkRead(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
-// @Router /message/downloadimage [post]
+// @Security ApiKeyAuth
+// @Router /message/downloadmedia [post]
 func (m *messageHandler) DownloadMedia(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
 
@@ -219,6 +223,7 @@ func (m *messageHandler) DownloadMedia(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /message/status [post]
 func (m *messageHandler) GetMessageStatus(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -265,6 +270,7 @@ func (m *messageHandler) GetMessageStatus(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /message/delete [post]
 func (m *messageHandler) DeleteMessageEveryone(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -316,6 +322,7 @@ func (m *messageHandler) DeleteMessageEveryone(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /message/edit [post]
 func (m *messageHandler) EditMessage(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
