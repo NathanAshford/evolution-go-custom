@@ -31,6 +31,7 @@ type labelHandler struct {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /label/chat [post]
 func (l *labelHandler) ChatLabel(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -77,6 +78,7 @@ func (l *labelHandler) ChatLabel(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /label/message [post]
 func (l *labelHandler) MessageLabel(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -128,6 +130,7 @@ func (l *labelHandler) MessageLabel(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /label/edit [post]
 func (l *labelHandler) EditLabel(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -174,6 +177,7 @@ func (l *labelHandler) EditLabel(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /unlabel/chat [post]
 func (l *labelHandler) ChatUnlabel(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -220,6 +224,7 @@ func (l *labelHandler) ChatUnlabel(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /unlabel/message [post]
 func (l *labelHandler) MessageUnlabel(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -269,7 +274,8 @@ func (l *labelHandler) MessageUnlabel(ctx *gin.Context) {
 // @Produce json
 // @Success 200 {object} gin.H "success"
 // @Failure 500 {object} gin.H "Internal server error"
-// @Router /label [get]
+// @Security ApiKeyAuth
+// @Router /label/list [get]
 func (l *labelHandler) GetLabels(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
 

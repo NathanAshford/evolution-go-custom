@@ -41,6 +41,7 @@ type sendHandler struct {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/text [post]
 func (s *sendHandler) SendText(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -87,6 +88,7 @@ func (s *sendHandler) SendText(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/link [post]
 func (s *sendHandler) SendLink(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -133,6 +135,7 @@ func (s *sendHandler) SendLink(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/media [post]
 func (s *sendHandler) SendMedia(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -293,6 +296,7 @@ func (s *sendHandler) SendMedia(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/poll [post]
 func (s *sendHandler) SendPoll(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -344,6 +348,7 @@ func (s *sendHandler) SendPoll(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/sticker [post]
 func (s *sendHandler) SendSticker(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -390,6 +395,7 @@ func (s *sendHandler) SendSticker(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/location [post]
 func (s *sendHandler) SendLocation(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -451,6 +457,7 @@ func (s *sendHandler) SendLocation(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/contact [post]
 func (s *sendHandler) SendContact(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -513,6 +520,7 @@ func (s *sendHandler) SendContact(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/button [post]
 func (s *sendHandler) SendButton(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -567,7 +575,7 @@ func (s *sendHandler) SendButton(ctx *gin.Context) {
 // @Description Each section must contain one or more `rows`. When `rowId` is omitted, the server generates a fallback ID.
 // @Description When `buttonText` is empty, the server falls back to "Ver Menu".
 // @Description
-// @Description Uses legacy `ListMessage` format (no ViewOnceMessage wrapper) so it renders on iOS, Android and WhatsApp Web.
+// @Description Uses the `single_select` native flow format (not legacy `ListMessage`).
 // @Tags Send Message
 // @Accept json
 // @Produce json
@@ -575,6 +583,7 @@ func (s *sendHandler) SendButton(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/list [post]
 func (s *sendHandler) SendList(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -651,6 +660,7 @@ func (s *sendHandler) SendList(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/carousel [post]
 func (s *sendHandler) SendCarousel(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -697,6 +707,7 @@ func (s *sendHandler) SendCarousel(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/status/text [post]
 func (s *sendHandler) SendStatusText(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -742,6 +753,7 @@ func (s *sendHandler) SendStatusText(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /send/status/media [post]
 func (s *sendHandler) SendStatusMedia(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")

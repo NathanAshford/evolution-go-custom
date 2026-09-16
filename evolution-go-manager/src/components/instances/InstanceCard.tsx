@@ -11,18 +11,24 @@ import {
   PowerOff,
   MessageSquare,
   FlaskConical,
+  Network,
+  RefreshCw,
 } from "lucide-react";
 import type { Instance } from "@/types/instance";
+import TimelockTimer from "./TimelockTimer";
 
 type InstanceCardProps = {
   instance: Instance;
   isDeleting?: string | null;
+  isReconnecting?: string | null;
   onSettings: (instance: Instance) => void;
   onDelete: (instance: Instance) => void;
   onConnect: (instance: Instance) => void;
   onDisconnect: (instance: Instance) => void;
+  onReconnect?: (instance: Instance) => void;
   onSendMessage?: (instance: Instance) => void;
   onTestMessage?: (instance: Instance) => void;
+  onSetProxy?: (instance: Instance) => void;
 };
 
 const getStatusBadge = (status: string) => {
@@ -44,14 +50,18 @@ const getStatusBadge = (status: string) => {
 export default function InstanceCard({
   instance,
   isDeleting,
+  isReconnecting,
   onSettings,
   onDelete,
   onConnect,
   onDisconnect,
+  onReconnect,
   onSendMessage,
   onTestMessage,
+  onSetProxy,
 }: InstanceCardProps) {
   const isConnected = instance.status === "open";
+  const isReconnectingThis = isReconnecting === instance.id;
 
   return (
     <Card className="group relative flex h-full flex-col bg-sidebar border-sidebar-border hover:bg-sidebar-accent/30 transition-all duration-300 hover:shadow-lg hover:shadow-black/10 overflow-hidden">
@@ -123,6 +133,23 @@ export default function InstanceCard({
               </span>
             </div>
           )}
+
+          {instance.proxy?.host && (
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Network className="h-3 w-3 text-blue-400" />
+                Proxy
+              </span>
+              <span
+                className="font-mono truncate ml-2 max-w-[150px] text-blue-400"
+                title={`${instance.proxy.protocol || "http"}://${instance.proxy.host}:${instance.proxy.port}`}
+              >
+                {instance.proxy.host}:{instance.proxy.port}
+              </span>
+            </div>
+          )}
+
+          <TimelockTimer instanceId={instance.id} connected={isConnected} />
         </div>
 
         {/* Action buttons - hover effect */}
@@ -152,6 +179,24 @@ export default function InstanceCard({
 
           {isConnected && <div className="w-px bg-sidebar-border" />}
 
+          {/* Reconnect Button - rebuilds the WhatsApp socket without a new QR */}
+          {onReconnect && (
+            <>
+              <Button
+                variant="ghost"
+                className="rounded-none h-12 px-4 text-cyan-500 hover:text-cyan-400 hover:bg-cyan-500/10"
+                disabled={isReconnectingThis}
+                onClick={() => onReconnect(instance)}
+                title="Reconectar instância"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isReconnectingThis ? "animate-spin" : ""}`}
+                />
+              </Button>
+              <div className="w-px bg-sidebar-border" />
+            </>
+          )}
+
           {/* Send Message Button - only show if connected */}
           {isConnected && onSendMessage && (
             <>
@@ -179,6 +224,21 @@ export default function InstanceCard({
                 aria-label={`Testar mensagens interativas em ${instance.instanceName}`}
               >
                 <FlaskConical className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <div className="w-px bg-sidebar-border" />
+            </>
+          )}
+
+          {/* Proxy Button */}
+          {onSetProxy && (
+            <>
+              <Button
+                variant="ghost"
+                className="rounded-none h-12 px-4 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                onClick={() => onSetProxy(instance)}
+                title="Configurar proxy"
+              >
+                <Network className="h-4 w-4" />
               </Button>
               <div className="w-px bg-sidebar-border" />
             </>

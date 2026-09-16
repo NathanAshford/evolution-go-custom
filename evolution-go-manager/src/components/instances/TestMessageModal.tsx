@@ -22,14 +22,15 @@ type TestScenarioId =
   | 'carousel_reply'
   | 'carousel_url'
   | 'carousel_call'
-  | 'carousel_copy';
+  | 'carousel_copy'
+  | 'call_voice';
 
 type TestScenario = {
   id: TestScenarioId;
-  group: 'button' | 'list' | 'carousel';
+  group: 'button' | 'list' | 'carousel' | 'call';
   label: string;
   description: string;
-  endpoint: 'button' | 'list' | 'carousel';
+  endpoint: 'button' | 'list' | 'carousel' | 'call';
 };
 
 const SCENARIOS: TestScenario[] = [
@@ -120,12 +121,21 @@ const SCENARIOS: TestScenario[] = [
     label: 'Carrossel com botao COPY',
     description: '4 cards com cupons distintos usando o campo `copyCode`.',
   },
+  {
+    id: 'call_voice',
+    group: 'call',
+    endpoint: 'call',
+    label: 'Ligacao de voz',
+    description:
+      'Faz o telefone do destinatario tocar via chamada de voz do WhatsApp, aguarda alguns segundos e desliga. Requer instancia conectada.',
+  },
 ];
 
 const GROUP_LABELS: Record<TestScenario['group'], string> = {
   button: 'Botoes interativos (/send/button)',
   list: 'Lista (/send/list)',
   carousel: 'Carrossel (/send/carousel)',
+  call: 'Ligacao (/call/offer)',
 };
 
 function buildPayload(
@@ -133,6 +143,10 @@ function buildPayload(
   number: string,
 ): Record<string, unknown> {
   switch (scenarioId) {
+    // Calls do not go through a message payload — handleSend places them via
+    // /call/offer directly. This case only keeps the switch exhaustive.
+    case 'call_voice':
+      return { number };
     case 'btn_reply_1':
       return {
         number,
@@ -530,6 +544,7 @@ function TestMessageModal({ open, onClose, instance }: TestMessageModalProps) {
       button: [],
       list: [],
       carousel: [],
+      call: [],
     };
     for (const s of SCENARIOS) groups[s.group].push(s);
     return groups;
@@ -559,6 +574,32 @@ function TestMessageModal({ open, onClose, instance }: TestMessageModalProps) {
     setResult(null);
 
     try {
+      // A call is not a message: it rings the peer's device, so it is placed
+      // and then hung up automatically to keep the test non-intrusive.
+      if (scenario.endpoint === 'call') {
+        const call = await instancesApi.offerCall(instance.apikey, {
+          number: digits,
+        });
+
+        toast.info('Chamando... o telefone do destinatario deve estar tocando.', {
+          description: `callId ${call.callId}`,
+        });
+
+        // Let it ring briefly, then hang up so the test does not leave a live call.
+        await new Promise((resolve) => setTimeout(resolve, 6000));
+        try {
+          await instancesApi.terminateCall(instance.apikey, call.callId, 'user_ended');
+        } catch {
+          // The peer may have already declined; the call is over either way.
+        }
+
+        setResult({ ok: true, messageId: call.callId });
+        toast.success('Ligacao de teste concluida!', {
+          description: 'A chamada tocou e foi encerrada.',
+        });
+        return;
+      }
+
       const payload = buildPayload(scenarioId, digits);
       let response;
       if (scenario.endpoint === 'button') {
@@ -705,10 +746,20 @@ function TestMessageModal({ open, onClose, instance }: TestMessageModalProps) {
                   </p>
                 </>
               ) : (
-                <>
-                  <p className="font-medium">Falha no envio</p>
-                  <p className="text-xs">{result.error}</p>
-                </>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">Falha no envio</p>
+                    <p className="text-xs">{result.error}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={isSending}
+                    className="shrink-0 rounded-md border border-destructive/40 px-3 py-1 text-xs font-medium hover:bg-destructive/10 disabled:opacity-50"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
               )}
             </div>
           )}

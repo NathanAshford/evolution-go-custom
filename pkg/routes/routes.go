@@ -86,9 +86,13 @@ func (r *Routes) AssignRoutes(eng *gin.Engine) {
 			routes.GET("/info/:instanceId", r.instanceHandler.Info)
 			routes.DELETE("/delete/:instanceId", r.instanceHandler.Delete)
 			routes.POST("/proxy/:instanceId", r.instanceHandler.SetProxy)
+			routes.GET("/proxy/:instanceId", r.instanceHandler.GetProxy)
+			routes.POST("/proxy/:instanceId/reconnect", r.instanceHandler.ReconnectProxy)
+			routes.POST("/proxy/:instanceId/test", r.instanceHandler.TestProxy)
 			routes.DELETE("/proxy/:instanceId", r.instanceHandler.DeleteProxy)
 			routes.POST("/forcereconnect/:instanceId", r.instanceHandler.ForceReconnect)
 			routes.GET("/logs/:instanceId", r.instanceHandler.GetLogs)
+			routes.GET("/limits/:instanceId", r.instanceHandler.Limits)
 		}
 	}
 
@@ -105,6 +109,9 @@ func (r *Routes) AssignRoutes(eng *gin.Engine) {
 			routes.DELETE("/logout", r.instanceHandler.Logout)
 			routes.GET("/:instanceId/advanced-settings", r.instanceHandler.GetAdvancedSettings)
 			routes.PUT("/:instanceId/advanced-settings", r.instanceHandler.UpdateAdvancedSettings)
+			routes.GET("/webhooks/:instanceId", r.instanceHandler.ListWebhooks)
+			routes.POST("/webhooks/:instanceId", r.instanceHandler.AddWebhook)
+			routes.DELETE("/webhooks/:instanceId", r.instanceHandler.RemoveWebhook)
 		}
 	}
 
@@ -192,6 +199,19 @@ func (r *Routes) AssignRoutes(eng *gin.Engine) {
 		routes.Use(r.authMiddleware.Auth)
 		{
 			routes.POST("/reject", r.jidValidationMiddleware.ValidateNumberField(), r.callHandler.RejectCall)
+
+			// VoIP calls (WaCalls-based stack). /offer takes a number and rings it;
+			// the remaining endpoints act on the returned callId.
+			routes.POST("/offer", r.callHandler.OfferCall)
+			routes.POST("/accept", r.callHandler.AcceptCall)
+			routes.POST("/terminate", r.callHandler.TerminateCall)
+			routes.POST("/hangup", r.callHandler.HangupCall)
+
+			// Bidirectional call audio (16 kHz mono PCM) over a WebSocket.
+			routes.GET("/audio/:callId", r.callHandler.StreamAudio)
+			routes.GET("/list", r.callHandler.ListCalls)
+			routes.GET("/history", r.callHandler.CallHistory)
+			routes.GET("/status/:callId", r.callHandler.GetCall)
 		}
 	}
 	routes = eng.Group("/community")

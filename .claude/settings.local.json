@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(cp -r \"C:/Users/ETUS_0135/Desktop/Projetos/Projetos/evoGO_temp/.\" \"C:/Users/ETUS_0135/Desktop/Projetos/Projetos/evoGO/\")",
-      "Bash(rm -rf \"C:/Users/ETUS_0135/Desktop/Projetos/Projetos/evoGO_temp\")",
-      "Bash(git add:*)"
-    ]
-  }
-}

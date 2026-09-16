@@ -3,6 +3,7 @@ package send_service
 import (
 	"bytes"
 	"context"
+	crypto_rand "crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -23,10 +24,12 @@ import (
 	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
 	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
 	"github.com/EvolutionAPI/evolution-go/pkg/utils"
+	whatsmeow_registry "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/registry"
 	whatsmeow_service "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/service"
 	"github.com/chai2010/webp"
 	"github.com/gabriel-vasile/mimetype"
 	"go.mau.fi/whatsmeow"
+	waBinary "go.mau.fi/whatsmeow/binary"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"golang.org/x/net/html"
@@ -51,7 +54,7 @@ type SendService interface {
 }
 
 type sendService struct {
-	clientPointer    map[string]*whatsmeow.Client
+	clientPointer    *whatsmeow_registry.Clients
 	whatsmeowService whatsmeow_service.WhatsmeowService
 	config           *config.Config
 	loggerWrapper    *logger_wrapper.LoggerManager
@@ -66,6 +69,11 @@ type SendDataStruct struct {
 	FormatJid    *bool
 	Quoted       QuotedStruct
 	MediaHandle  string
+	// Extra biz/bot nodes injected straight into the XMPP stanza. Interactive
+	// content (buttons, lists) only renders on mobile when the stanza carries
+	// the node that matches the payload, so the caller that built the payload
+	// is the one that supplies them.
+	AdditionalNodes *[]waBinary.Node
 }
 
 type QuotedStruct struct {
@@ -171,25 +179,25 @@ type ContactStruct struct {
 //   - pix:   uses `currency` + `name` + `keyType` + `key` (must be sent alone)
 type Button struct {
 	// Button kind. One of: reply, copy, url, call, pix.
-	Type        string `json:"type" enums:"reply,copy,url,call,pix" example:"reply"`
+	Type string `json:"type" enums:"reply,copy,url,call,pix" example:"reply"`
 	// Label rendered inside the button (reply / copy / url / call). Ignored for pix.
 	DisplayText string `json:"displayText" example:"Quero saber mais"`
 	// Callback payload for `reply` or code-to-copy internal id for `copy`.
-	Id          string `json:"id" example:"btn_info"`
+	Id string `json:"id" example:"btn_info"`
 	// Code placed in the clipboard when type=copy.
-	CopyCode    string `json:"copyCode,omitempty" example:"PROMO2026"`
+	CopyCode string `json:"copyCode,omitempty" example:"PROMO2026"`
 	// Target URL when type=url.
-	URL         string `json:"url,omitempty" example:"https://evolutionapi.com"`
+	URL string `json:"url,omitempty" example:"https://evolutionapi.com"`
 	// Destination phone number (E.164) when type=call.
 	PhoneNumber string `json:"phoneNumber,omitempty" example:"+5582988898565"`
 	// ISO currency code for type=pix (e.g. BRL).
-	Currency    string `json:"currency,omitempty" example:"BRL"`
+	Currency string `json:"currency,omitempty" example:"BRL"`
 	// Merchant display name shown on the Pix sheet.
-	Name        string `json:"name,omitempty" example:"Minha Loja"`
+	Name string `json:"name,omitempty" example:"Minha Loja"`
 	// Pix key type. One of: phone, email, cpf, cnpj, random.
-	KeyType     string `json:"keyType,omitempty" enums:"phone,email,cpf,cnpj,random" example:"cpf"`
+	KeyType string `json:"keyType,omitempty" enums:"phone,email,cpf,cnpj,random" example:"cpf"`
 	// Pix key value matching the keyType.
-	Key         string `json:"key,omitempty" example:"12345678900"`
+	Key string `json:"key,omitempty" example:"12345678900"`
 }
 
 // ButtonStruct is the body for POST /send/button.
@@ -204,35 +212,39 @@ type Button struct {
 //   - safe combinations: only-reply (up to 3) OR grouped CTAs (copy + url + call).
 type ButtonStruct struct {
 	// Destination phone number.
-	Number       string       `json:"number" example:"5582988898565"`
+	Number string `json:"number" example:"5582988898565"`
 	// Header title (required).
-	Title        string       `json:"title" example:"Oferta especial"`
+	Title string `json:"title" example:"Oferta especial"`
 	// Body description text (required).
-	Description  string       `json:"description" example:"Confira as condicoes abaixo"`
+	Description string `json:"description" example:"Confira as condicoes abaixo"`
 	// Footer text (required).
-	Footer       string       `json:"footer" example:"Evolution GO"`
+	Footer string `json:"footer" example:"Evolution GO"`
 	// Buttons array. See combination rules on the parent type description.
-	Buttons      []Button     `json:"buttons"`
+	Buttons []Button `json:"buttons"`
 	// Typing delay (milliseconds) applied before sending the message.
-	Delay        int32        `json:"delay,omitempty" example:"1200"`
+	Delay int32 `json:"delay,omitempty" example:"1200"`
 	// JIDs to mention inside the body text.
-	MentionedJID []string     `json:"mentionedJid,omitempty"`
+	MentionedJID []string `json:"mentionedJid,omitempty"`
 	// Mention every participant (groups only).
-	MentionAll   bool         `json:"mentionAll,omitempty"`
+	MentionAll bool `json:"mentionAll,omitempty"`
 	// If false, skips automatic formatting/validation of `number` into a JID.
-	FormatJid    *bool        `json:"formatJid,omitempty"`
+	FormatJid *bool `json:"formatJid,omitempty"`
 	// Quoted (reply-to) context.
-	Quoted       QuotedStruct `json:"quoted,omitempty"`
+	Quoted QuotedStruct `json:"quoted,omitempty"`
+	// Optional image URL used as header for reply or CTA (url/call/copy) buttons. Not supported for pix.
+	ImageUrl string `json:"imageUrl,omitempty"`
+	// Optional video URL used as header for reply or CTA (url/call/copy) buttons. Not supported for pix.
+	VideoUrl string `json:"videoUrl,omitempty"`
 }
 
 // Row is a selectable item inside a list Section.
 type Row struct {
 	// Row main label.
-	Title       string `json:"title" example:"Plano Basico"`
+	Title string `json:"title" example:"Plano Basico"`
 	// Optional secondary line below the title.
 	Description string `json:"description,omitempty" example:"R$ 29,90/mes"`
 	// Callback payload returned when the user taps the row. Auto-generated if empty.
-	RowId       string `json:"rowId,omitempty" example:"plan_basic"`
+	RowId string `json:"rowId,omitempty" example:"plan_basic"`
 }
 
 // Section groups related Rows under an optional title.
@@ -240,35 +252,35 @@ type Section struct {
 	// Section heading (optional; rendered as a group separator).
 	Title string `json:"title,omitempty" example:"Planos"`
 	// Rows inside this section.
-	Rows  []Row  `json:"rows"`
+	Rows []Row `json:"rows"`
 }
 
 // ListStruct is the body for POST /send/list.
 //
-// Renders as a single-select menu (legacy ListMessage format — compatible with iOS, Android and WhatsApp Web).
+// Renders as a single-select native flow (compatible with iOS, Android and WhatsApp Web).
 type ListStruct struct {
 	// Destination phone number.
-	Number       string       `json:"number" example:"5582988898565"`
+	Number string `json:"number" example:"5582988898565"`
 	// Header title (required).
-	Title        string       `json:"title" example:"Nossos planos"`
+	Title string `json:"title" example:"Nossos planos"`
 	// Body description text (required).
-	Description  string       `json:"description" example:"Escolha o plano ideal para voce"`
+	Description string `json:"description" example:"Escolha o plano ideal para voce"`
 	// Label of the button that opens the list. Defaults to "Ver Menu" when empty.
-	ButtonText   string       `json:"buttonText" example:"Abrir cardapio"`
+	ButtonText string `json:"buttonText" example:"Abrir cardapio"`
 	// Footer text (required).
-	FooterText   string       `json:"footerText" example:"Evolution GO"`
+	FooterText string `json:"footerText" example:"Evolution GO"`
 	// Sections with rows. At least one section with one row is required.
-	Sections     []Section    `json:"sections"`
+	Sections []Section `json:"sections"`
 	// Typing delay (milliseconds) applied before sending the message.
-	Delay        int32        `json:"delay,omitempty" example:"1200"`
+	Delay int32 `json:"delay,omitempty" example:"1200"`
 	// JIDs to mention inside the body text.
-	MentionedJID []string     `json:"mentionedJid,omitempty"`
+	MentionedJID []string `json:"mentionedJid,omitempty"`
 	// Mention every participant (groups only).
-	MentionAll   bool         `json:"mentionAll,omitempty"`
+	MentionAll bool `json:"mentionAll,omitempty"`
 	// If false, skips automatic formatting/validation of `number` into a JID.
-	FormatJid    *bool        `json:"formatJid,omitempty"`
+	FormatJid *bool `json:"formatJid,omitempty"`
 	// Quoted (reply-to) context.
-	Quoted       QuotedStruct `json:"quoted,omitempty"`
+	Quoted QuotedStruct `json:"quoted,omitempty"`
 }
 
 // CarouselButtonStruct is a button attached to a single carousel card.
@@ -289,20 +301,20 @@ type ListStruct struct {
 // mixed sets do not render on WhatsApp Web. Prefer only-REPLY or only-CTAs per card.
 type CarouselButtonStruct struct {
 	// Button kind (case-insensitive). One of: REPLY (default), URL, CALL, COPY.
-	Type        string `json:"type" enums:"REPLY,URL,CALL,COPY,reply,url,call,copy" example:"REPLY"`
+	Type string `json:"type" enums:"REPLY,URL,CALL,COPY,reply,url,call,copy" example:"REPLY"`
 	// Label rendered inside the button.
 	DisplayText string `json:"displayText" example:"Quero saber mais"`
 	// Context-dependent: REPLY payload, URL target (type=URL) or phone number (type=CALL).
-	Id          string `json:"id" example:"card1_info"`
+	Id string `json:"id" example:"card1_info"`
 	// Code placed in the clipboard when type=COPY.
-	CopyCode    string `json:"copyCode,omitempty" example:"PROMO2026"`
+	CopyCode string `json:"copyCode,omitempty" example:"PROMO2026"`
 }
 
 // CarouselCardHeaderStruct is the top area of a carousel card.
 // Either `imageUrl` OR `videoUrl` may be provided (image takes precedence when both are set).
 type CarouselCardHeaderStruct struct {
 	// Optional visible title above the media.
-	Title    string `json:"title,omitempty" example:"Oferta do dia"`
+	Title string `json:"title,omitempty" example:"Oferta do dia"`
 	// Optional subtitle rendered below the title.
 	Subtitle string `json:"subtitle,omitempty" example:"Somente hoje"`
 	// Public URL to an image. Downloaded, uploaded to WhatsApp servers and used as card media.
@@ -321,13 +333,13 @@ type CarouselCardBodyStruct struct {
 // Each card requires at least `header` + `body`.
 type CarouselCardStruct struct {
 	// Card header (media + title/subtitle).
-	Header  CarouselCardHeaderStruct `json:"header"`
+	Header CarouselCardHeaderStruct `json:"header"`
 	// Card body text (required).
-	Body    CarouselCardBodyStruct   `json:"body"`
+	Body CarouselCardBodyStruct `json:"body"`
 	// Optional footer rendered under the body.
-	Footer  string                   `json:"footer,omitempty" example:"Por tempo limitado"`
+	Footer string `json:"footer,omitempty" example:"Por tempo limitado"`
 	// Buttons shown on the card. See CarouselButtonStruct for combination rules.
-	Buttons []CarouselButtonStruct   `json:"buttons,omitempty"`
+	Buttons []CarouselButtonStruct `json:"buttons,omitempty"`
 }
 
 // CarouselStruct is the body for POST /send/carousel.
@@ -336,19 +348,19 @@ type CarouselCardStruct struct {
 // Each card must have `header` + `body`; button rules are described on CarouselButtonStruct.
 type CarouselStruct struct {
 	// Destination phone number.
-	Number    string               `json:"number" example:"5582988898565"`
+	Number string `json:"number" example:"5582988898565"`
 	// Optional message body shown above the cards.
-	Body      string               `json:"body,omitempty" example:"Confira nossas novidades!"`
+	Body string `json:"body,omitempty" example:"Confira nossas novidades!"`
 	// Optional message footer shown below the cards.
-	Footer    string               `json:"footer,omitempty" example:"Evolution GO"`
+	Footer string `json:"footer,omitempty" example:"Evolution GO"`
 	// Typing delay (milliseconds) applied before sending the message.
-	Delay     int32                `json:"delay,omitempty" example:"1200"`
+	Delay int32 `json:"delay,omitempty" example:"1200"`
 	// If false, skips automatic formatting/validation of `number` into a JID.
-	FormatJid *bool                `json:"formatJid,omitempty"`
+	FormatJid *bool `json:"formatJid,omitempty"`
 	// Quoted (reply-to) context.
-	Quoted    QuotedStruct         `json:"quoted,omitempty"`
+	Quoted QuotedStruct `json:"quoted,omitempty"`
 	// Cards displayed in order. At least one card is required.
-	Cards     []CarouselCardStruct `json:"cards"`
+	Cards []CarouselCardStruct `json:"cards"`
 }
 
 type StatusTextStruct struct {
@@ -370,7 +382,7 @@ type MessageSendStruct struct {
 }
 
 func (s *sendService) ensureClientConnected(instanceId string) (*whatsmeow.Client, error) {
-	client := s.clientPointer[instanceId]
+	client := s.clientPointer.Get(instanceId)
 	s.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Checking client connection status - Client exists: %v", instanceId, client != nil)
 
 	if client == nil {
@@ -384,7 +396,7 @@ func (s *sendService) ensureClientConnected(instanceId string) (*whatsmeow.Clien
 		s.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Instance started, waiting 2 seconds...", instanceId)
 		time.Sleep(2 * time.Second)
 
-		client = s.clientPointer[instanceId]
+		client = s.clientPointer.Get(instanceId)
 		s.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Checking new client - Exists: %v, Connected: %v",
 			instanceId,
 			client != nil,
@@ -1690,10 +1702,326 @@ func mapKeyType(keyType string) string {
 	}
 }
 
+// Match Connection Ashford's working generic native-flow stanza. Individual
+// button kinds stay in the protobuf, not in the plaintext node name.
+const (
+	nativeFlowNodeName    = "mixed"
+	nativeFlowNodeVersion = "9"
+)
+
+// interactiveBizNodes uses the validated recipient: bare group IDs must not
+// receive the direct-chat <bot> node.
+// interactiveDispatchError is returned when an InteractiveMessage is buried
+// inside a FutureProofMessage wrapper (DocumentWithCaptionMessage,
+// ViewOnceMessage, ViewOnceMessageV2, ViewOnceMessageV2Extension). Clients
+// dispatch on the outer field number and never descend, so the buttons simply
+// do not render. That failure used to be silent: the send succeeded, the phone
+// showed a blank message. Failing loudly here keeps the regression from
+// shipping a second time.
+var interactiveDispatchError = errors.New("interactive message must travel unwrapped: a FutureProofMessage wrapper hides the buttons from every client")
+
+// wrappedInteractiveMessage reports whether an InteractiveMessage is hidden
+// inside one of the FutureProofMessage wrappers. Only the wrappers a client
+// would refuse to descend into are inspected.
+func wrappedInteractiveMessage(msg *waE2E.Message) bool {
+	if msg == nil {
+		return false
+	}
+	for _, wrapper := range []*waE2E.FutureProofMessage{
+		msg.GetDocumentWithCaptionMessage(),
+		msg.GetViewOnceMessage(),
+		msg.GetViewOnceMessageV2(),
+		msg.GetViewOnceMessageV2Extension(),
+	} {
+		inner := wrapper.GetMessage()
+		if inner == nil {
+			continue
+		}
+		if inner.GetInteractiveMessage() != nil || wrappedInteractiveMessage(inner) {
+			return true
+		}
+	}
+	return false
+}
+
+// interactiveSendNodes decides which plaintext stanza nodes accompany a
+// message. The WhatsApp server judges only these nodes; the protobuf travels
+// inside <enc> and does not participate. Keeping the whole decision here — the
+// condition, the construction and the fallback — means a test can cover it,
+// including the case where interactive nodes are omitted entirely.
+func interactiveSendNodes(msg *waE2E.Message, recipient types.JID, fallback *[]waBinary.Node) (*[]waBinary.Node, error) {
+	if wrappedInteractiveMessage(msg) {
+		return nil, interactiveDispatchError
+	}
+	if msg.GetInteractiveMessage() != nil {
+		nodes := interactiveBizNodes(recipient)
+		return &nodes, nil
+	}
+	return fallback, nil
+}
+
+func interactiveBizNodes(recipient types.JID) []waBinary.Node {
+	nodes := []waBinary.Node{
+		{
+			Tag:   "biz",
+			Attrs: waBinary.Attrs{},
+			Content: []waBinary.Node{{
+				Tag:   "interactive",
+				Attrs: waBinary.Attrs{"type": "native_flow", "v": "1"},
+				Content: []waBinary.Node{{
+					Tag:   "native_flow",
+					Attrs: waBinary.Attrs{"name": nativeFlowNodeName, "v": nativeFlowNodeVersion},
+				}},
+			}},
+		},
+	}
+
+	if recipient.Server != types.GroupServer {
+		nodes = append(nodes, waBinary.Node{
+			Tag:   "bot",
+			Attrs: waBinary.Attrs{"biz_bot": "1"},
+		})
+	}
+
+	return nodes
+}
+
+// newInteractiveMessage deliberately leaves InteractiveMessage at the top level.
+// FutureProofMessage wrappers hid the buttons in the reference implementation.
+func newInteractiveMessage(interactive *waE2E.InteractiveMessage) *waE2E.Message {
+	if interactive.ContextInfo == nil {
+		interactive.ContextInfo = &waE2E.ContextInfo{}
+	}
+	// If the entropy source fails, send NO MessageContextInfo rather than one
+	// carrying an all-zero secret: a predictable secret is worse than an absent
+	// one. The reference implementation makes the same choice.
+	secret := make([]byte, 32)
+	if _, err := crypto_rand.Read(secret); err != nil {
+		return &waE2E.Message{InteractiveMessage: interactive}
+	}
+	return &waE2E.Message{
+		InteractiveMessage: interactive,
+		MessageContextInfo: &waE2E.MessageContextInfo{
+			MessageSecret:             secret,
+			DeviceListMetadata:        &waE2E.DeviceListMetadata{},
+			DeviceListMetadataVersion: proto.Int32(2),
+		},
+	}
+}
+
+// buildInteractiveHeader omits empty headers and marks uploaded media explicitly.
+func buildInteractiveHeader(title string, media *waE2E.Message) *waE2E.InteractiveMessage_Header {
+	header := &waE2E.InteractiveMessage_Header{}
+	if strings.TrimSpace(title) != "" {
+		header.Title = proto.String(title)
+	}
+	switch {
+	case media.GetImageMessage() != nil:
+		header.Media = &waE2E.InteractiveMessage_Header_ImageMessage{ImageMessage: media.GetImageMessage()}
+	case media.GetVideoMessage() != nil:
+		header.Media = &waE2E.InteractiveMessage_Header_VideoMessage{VideoMessage: media.GetVideoMessage()}
+	case media.GetDocumentMessage() != nil:
+		header.Media = &waE2E.InteractiveMessage_Header_DocumentMessage{DocumentMessage: media.GetDocumentMessage()}
+	}
+	if header.Media != nil {
+		header.HasMediaAttachment = proto.Bool(true)
+	}
+	if header.Title == nil && header.Media == nil {
+		return nil
+	}
+	return header
+}
+
+// maxHeaderMediaBytes caps a header download. Without it a hostile or wrong URL
+// reads straight into memory until the process dies.
+const maxHeaderMediaBytes = 96 << 20
+
+// fetchHeaderMedia downloads a header image/video, rejecting a non-2xx status
+// and capping both the read and the wait. Mirrors the checks the plain media
+// path already does.
+func fetchHeaderMedia(rawURL string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("invalid header media url: %w", err)
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; EvolutionGO)")
+
+	httpClient := &http.Client{Timeout: 60 * time.Second}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download header media: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("header media url returned status %d", resp.StatusCode)
+	}
+
+	if resp.ContentLength > maxHeaderMediaBytes {
+		return nil, errors.New("header media exceeds size limit")
+	}
+	return readHeaderMedia(resp.Body, maxHeaderMediaBytes)
+}
+
+func readHeaderMedia(reader io.Reader, limit int64) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(reader, limit+1))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read header media: %w", err)
+	}
+	if int64(len(data)) > limit {
+		return nil, errors.New("header media exceeds size limit")
+	}
+	if len(data) == 0 {
+		return nil, errors.New("header media url returned an empty body")
+	}
+	return data, nil
+}
+
+// jpegThumbnailOf bounds both the decoded image and thumbnail dimensions.
+func jpegThumbnailOf(fileData []byte) []byte {
+	config, _, err := image.DecodeConfig(bytes.NewReader(fileData))
+	if err != nil || config.Width < 1 || config.Height < 1 || int64(config.Width)*int64(config.Height) > 32<<20 {
+		return nil
+	}
+	img, _, err := image.Decode(bytes.NewReader(fileData))
+	if err != nil {
+		return nil
+	}
+	bounds := img.Bounds()
+	thumbWidth, thumbHeight := 72, 72
+	if bounds.Dx() >= bounds.Dy() {
+		thumbHeight = max(1, bounds.Dy()*72/bounds.Dx())
+	} else {
+		thumbWidth = max(1, bounds.Dx()*72/bounds.Dy())
+	}
+	thumbImg := image.NewRGBA(image.Rect(0, 0, thumbWidth, thumbHeight))
+	for y := 0; y < thumbHeight; y++ {
+		for x := 0; x < thumbWidth; x++ {
+			srcX := x * bounds.Dx() / thumbWidth
+			srcY := y * bounds.Dy() / thumbHeight
+			thumbImg.Set(x, y, img.At(srcX+bounds.Min.X, srcY+bounds.Min.Y))
+		}
+	}
+
+	var thumbBuf bytes.Buffer
+	if jpeg.Encode(&thumbBuf, thumbImg, &jpeg.Options{Quality: 50}) != nil {
+		return nil
+	}
+
+	return thumbBuf.Bytes()
+}
+
+// Failed optional media stays headerless, preserving existing send behavior.
+func (s *sendService) buildInteractiveHeader(client *whatsmeow.Client, instance *instance_model.Instance, title, imageUrl, videoUrl string) *waE2E.InteractiveMessage_Header {
+	var media *waE2E.Message
+	if imageUrl != "" {
+		if uploaded := s.uploadHeaderImage(client, instance, imageUrl); uploaded != nil {
+			media = &waE2E.Message{ImageMessage: uploaded.ImageMessage}
+		}
+	} else if videoUrl != "" {
+		if uploaded := s.uploadHeaderVideo(client, instance, videoUrl); uploaded != nil {
+			media = &waE2E.Message{VideoMessage: uploaded.VideoMessage}
+		}
+	}
+	return buildInteractiveHeader(title, media)
+}
+
+func (s *sendService) uploadHeaderImage(client *whatsmeow.Client, instance *instance_model.Instance, imageUrl string) *waE2E.InteractiveMessage_Header_ImageMessage {
+	fileData, err := fetchHeaderMedia(imageUrl)
+	if err != nil {
+		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error fetching header image: %v", instance.Id, err)
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	uploaded, err := client.Upload(ctx, fileData, whatsmeow.MediaImage)
+	if err != nil {
+		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error uploading header image: %v", instance.Id, err)
+		return nil
+	}
+
+	mime := "image/jpeg"
+	if detected, detErr := mimetype.DetectReader(bytes.NewReader(fileData)); detErr == nil && detected != nil {
+		if detectedMime := detected.String(); detectedMime != "" {
+			mime = detectedMime
+		}
+	}
+	return &waE2E.InteractiveMessage_Header_ImageMessage{
+		ImageMessage: &waE2E.ImageMessage{
+			URL:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(mime),
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(fileData))),
+			JPEGThumbnail: jpegThumbnailOf(fileData),
+		},
+	}
+}
+
+func (s *sendService) uploadHeaderVideo(client *whatsmeow.Client, instance *instance_model.Instance, videoUrl string) *waE2E.InteractiveMessage_Header_VideoMessage {
+	fileData, err := fetchHeaderMedia(videoUrl)
+	if err != nil {
+		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error fetching header video: %v", instance.Id, err)
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	uploaded, err := client.Upload(ctx, fileData, whatsmeow.MediaVideo)
+	if err != nil {
+		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error uploading header video: %v", instance.Id, err)
+		return nil
+	}
+
+	mime := "video/mp4"
+	if detected, detErr := mimetype.DetectReader(bytes.NewReader(fileData)); detErr == nil && detected != nil {
+		if detectedMime := detected.String(); detectedMime != "" {
+			mime = detectedMime
+		}
+	}
+
+	return &waE2E.InteractiveMessage_Header_VideoMessage{
+		VideoMessage: &waE2E.VideoMessage{
+			URL:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(mime),
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(fileData))),
+		},
+	}
+}
+
 func (s *sendService) SendButton(data *ButtonStruct, instance *instance_model.Instance) (*MessageSendStruct, error) {
+	msg, err := buildButtonMessage(data)
+	if err != nil {
+		return nil, err
+	}
 	client, err := s.ensureClientConnected(instance.Id)
 	if err != nil {
 		return nil, err
+	}
+
+	if data.Buttons[0].Type != "pix" {
+		title := msg.InteractiveMessage.GetHeader().GetTitle()
+		msg.InteractiveMessage.Header = s.buildInteractiveHeader(client, instance, title, data.ImageUrl, data.VideoUrl)
+	}
+
+	// Quotes, mentions, webhooks and the archive share the normal send path.
+	return s.SendMessage(instance, msg, "InteractiveMessage", &SendDataStruct{
+		Number: data.Number, Delay: data.Delay,
+		MentionAll: data.MentionAll, MentionedJID: data.MentionedJID,
+		FormatJid: data.FormatJid, Quoted: data.Quoted,
+	})
+}
+
+func buildButtonMessage(data *ButtonStruct) (*waE2E.Message, error) {
+	if len(data.Buttons) == 0 {
+		return nil, errors.New("pelo menos um botao e necessario")
 	}
 
 	hasReply := false
@@ -1708,8 +2036,10 @@ func (s *sendService) SendButton(data *ButtonStruct, instance *instance_model.In
 			replyCount++
 		case "pix":
 			hasPix = true
-		default:
+		case "copy", "url", "call":
 			hasOtherTypes = true
+		default:
+			return nil, fmt.Errorf("tipo de botao invalido: %s", v.Type)
 		}
 	}
 
@@ -1730,28 +2060,69 @@ func (s *sendService) SendButton(data *ButtonStruct, instance *instance_model.In
 
 	buttons := []*waE2E.InteractiveMessage_NativeFlowMessage_NativeFlowButton{}
 
-	for _, v := range data.Buttons {
+	for i, v := range data.Buttons {
 		var paramsJSON *string
-
 		var name *string
 
 		switch v.Type {
 		case "reply":
 			name = proto.String("quick_reply")
-			paramsJSON = proto.String(`{"display_text":"` + v.DisplayText + `","id":"` + v.Id + `"}`)
+			// A reply button with no id sends back an empty selection, so two
+			// such buttons are indistinguishable when the user taps one. Fall
+			// back to a positional id, as the reference implementation does.
+			id := strings.TrimSpace(v.Id)
+			if id == "" {
+				id = fmt.Sprintf("btn_%d", i+1)
+			}
+			b, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "id": id})
+			paramsJSON = proto.String(string(b))
 		case "copy":
 			name = proto.String("cta_copy")
-			paramsJSON = proto.String(`{"display_text":"` + v.DisplayText + `","copy_code":"` + v.CopyCode + `"}`)
+			b, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "copy_code": v.CopyCode})
+			paramsJSON = proto.String(string(b))
 		case "url":
 			name = proto.String("cta_url")
-			paramsJSON = proto.String(`{"display_text":"` + v.DisplayText + `","url":"` + v.URL + `","merchant_url":"` + v.URL + `"}`)
+			b, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "url": v.URL, "merchant_url": v.URL})
+			paramsJSON = proto.String(string(b))
 		case "call":
 			name = proto.String("cta_call")
-			paramsJSON = proto.String(`{"display_text":"` + v.DisplayText + `","phone_number":"` + v.PhoneNumber + `"}`)
+			b, _ := json.Marshal(map[string]string{"display_text": v.DisplayText, "phone_number": v.PhoneNumber})
+			paramsJSON = proto.String(string(b))
 		case "pix":
 			randomId := utils.GenerateRandomString(11)
 			name = proto.String("payment_info")
-			paramsJSON = proto.String(`{"currency":"` + v.Currency + `","total_amount":{"value":0,"offset":100},"reference_id":"` + randomId + `","type":"physical-goods","order":{"status":"pending","subtotal":{"value":0,"offset":100},"order_type":"ORDER","items":[{"name":"","amount":{"value":0,"offset":100},"quantity":0,"sale_amount":{"value":0,"offset":100}}]},"payment_settings":[{"type":"pix_static_code","pix_static_code":{"merchant_name":"` + v.Name + `","key":"` + v.Key + `","key_type":"` + mapKeyType(v.KeyType) + `"}}],"share_payment_status":false}`)
+			pixParams := map[string]interface{}{
+				"currency":     v.Currency,
+				"total_amount": map[string]int{"value": 0, "offset": 100},
+				"reference_id": randomId,
+				"type":         "physical-goods",
+				"order": map[string]interface{}{
+					"status":     "pending",
+					"subtotal":   map[string]int{"value": 0, "offset": 100},
+					"order_type": "ORDER",
+					"items": []map[string]interface{}{
+						{
+							"name":        "",
+							"amount":      map[string]int{"value": 0, "offset": 100},
+							"quantity":    0,
+							"sale_amount": map[string]int{"value": 0, "offset": 100},
+						},
+					},
+				},
+				"payment_settings": []map[string]interface{}{
+					{
+						"type": "pix_static_code",
+						"pix_static_code": map[string]string{
+							"merchant_name": v.Name,
+							"key":           v.Key,
+							"key_type":      mapKeyType(v.KeyType),
+						},
+					},
+				},
+				"share_payment_status": false,
+			}
+			b, _ := json.Marshal(pixParams)
+			paramsJSON = proto.String(string(b))
 		}
 
 		buttons = append(buttons, &waE2E.InteractiveMessage_NativeFlowMessage_NativeFlowButton{
@@ -1760,120 +2131,84 @@ func (s *sendService) SendButton(data *ButtonStruct, instance *instance_model.In
 		})
 	}
 
-	messageId := client.GenerateMessageID()
-	templateId := strconv.FormatInt(time.Now().UnixNano()/1000000, 10)
-	messageParamsJSON := `{"from":"api","templateId":` + templateId + `}`
+	var interactive *waE2E.InteractiveMessage
 
-	var msg *waE2E.Message
-
-	if hasPix {
-		msg = &waE2E.Message{
-			InteractiveMessage: &waE2E.InteractiveMessage{
-				InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
-					NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
-						Buttons:           buttons,
-						MessageParamsJSON: &messageParamsJSON,
-					},
+	if hasReply && !hasOtherTypes && !hasPix {
+		// Reply-only buttons are a native flow like every other kind, not the
+		// legacy ButtonsMessage. The legacy type draws ack 405 and is not
+		// delivered, and whatsmeow recognises it and appends a <biz> node of its
+		// own — two <biz> nodes in one stanza. It does not recognise
+		// InteractiveMessage, so our node stays the only one.
+		interactive = &waE2E.InteractiveMessage{
+			Body:        &waE2E.InteractiveMessage_Body{Text: proto.String(data.Description)},
+			ContextInfo: &waE2E.ContextInfo{},
+			InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
+				NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
+					Buttons:        buttons,
+					MessageVersion: proto.Int32(1),
 				},
 			},
 		}
-	} else {
-		body := func() string {
-			t := "*" + data.Title + "*"
-			if data.Description != "" {
-				t += "\n\n" + data.Description + "\n"
-			}
-			return t
-		}()
+		if data.Footer != "" {
+			interactive.Footer = &waE2E.InteractiveMessage_Footer{Text: proto.String(data.Footer)}
+		}
+		if header := buildInteractiveHeader(data.Title, nil); header != nil {
+			interactive.Header = header
+		}
+	} else if hasPix {
+		// Pix announces order_details in the params, which is what the phone
+		// looks for on this flow.
+		paymentMsgParams := `{"native_flow_name":"order_details","version":1}`
 
-		interactiveMsg := &waE2E.InteractiveMessage{
-			Body: &waE2E.InteractiveMessage_Body{
-				Text: &body,
-			},
+		interactive = &waE2E.InteractiveMessage{
+			ContextInfo: &waE2E.ContextInfo{},
 			InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
 				NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
 					Buttons:           buttons,
-					MessageParamsJSON: &messageParamsJSON,
+					MessageParamsJSON: &paymentMsgParams,
 					MessageVersion:    proto.Int32(1),
 				},
 			},
-			ContextInfo: &waE2E.ContextInfo{},
 		}
-
-		// Footer conditional - only add if not empty (iOS compatibility)
-		if data.Footer != "" {
-			interactiveMsg.Footer = &waE2E.InteractiveMessage_Footer{
-				Text: &data.Footer,
-			}
-		}
-
-		// Header with title
 		if data.Title != "" {
-			interactiveMsg.Header = &waE2E.InteractiveMessage_Header{
-				Title:              proto.String(data.Title),
-				HasMediaAttachment: proto.Bool(false),
-			}
+			interactive.Body = &waE2E.InteractiveMessage_Body{Text: proto.String(data.Title)}
+		}
+	} else {
+		// Mixed CTA buttons (url/copy/call). Title goes in the body, not the
+		// header, so a media header does not print it twice.
+		body := "*" + data.Title + "*"
+		if data.Description != "" {
+			body += "\n\n" + data.Description + "\n"
 		}
 
-		msg = &waE2E.Message{
-			InteractiveMessage: interactiveMsg,
-		}
-	}
-
-	recipient, err := s.validateAndCheckUserExists(data.Number, data.FormatJid, &data.Quoted.MessageID, &data.Quoted.MessageID, instance)
-	if err != nil {
-		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error validating message fields or user check: %v", instance.Id, err)
-		return nil, err
-	}
-
-	if data.Delay > 0 {
-		err := client.SendChatPresence(context.Background(), recipient, types.ChatPresence("composing"), types.ChatPresenceMedia(""))
-		if err != nil {
-			return nil, err
-		}
-
-		time.Sleep(time.Duration(data.Delay) * time.Millisecond)
-
-		err = client.SendChatPresence(context.Background(), recipient, types.ChatPresence("paused"), types.ChatPresenceMedia(""))
-		if err != nil {
-			return nil, err
+		interactive = &waE2E.InteractiveMessage{
+			Body:        &waE2E.InteractiveMessage_Body{Text: proto.String(body)},
+			Footer:      &waE2E.InteractiveMessage_Footer{Text: proto.String(data.Footer)},
+			ContextInfo: &waE2E.ContextInfo{},
+			InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
+				NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
+					Buttons:        buttons,
+					MessageVersion: proto.Int32(1),
+				},
+			},
 		}
 	}
 
-	response, err := client.SendMessage(context.Background(), recipient, msg, whatsmeow.SendRequestExtra{ID: messageId})
-	if err != nil {
-		return nil, err
-	}
-
-	messageInfo := types.MessageInfo{
-		MessageSource: types.MessageSource{
-			Chat:     recipient,
-			Sender:   *client.Store.ID,
-			IsFromMe: true,
-			IsGroup:  false,
-		},
-		ID:        messageId,
-		Timestamp: time.Now(),
-		ServerID:  response.ServerID,
-		Type:      "ButtonMessage",
-	}
-
-	messageSent := &MessageSendStruct{
-		Info:    messageInfo,
-		Message: msg,
-		MessageContextInfo: &waE2E.ContextInfo{
-			StanzaID:      proto.String(data.Quoted.MessageID),
-			Participant:   proto.String(data.Quoted.Participant),
-			QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
-		},
-	}
-
-	return messageSent, nil
+	return newInteractiveMessage(interactive), nil
 }
 
 func stringPointer(s string) *string {
 	return &s
 }
+
+// Limits the WhatsApp clients enforce. Over them the message is dropped whole,
+// so reject it here with a message the caller can act on.
+const (
+	maxListSections  = 10
+	maxListRows      = 10
+	maxCarouselCards = 10
+	maxCardButtons   = 3
+)
 
 func sectionsToString(data *ListStruct) (string, error) {
 	type row struct {
@@ -1894,7 +2229,37 @@ func sectionsToString(data *ListStruct) (string, error) {
 		Sections []listSection `json:"sections"`
 	}
 
+	if len(data.Sections) == 0 {
+		return "", errors.New("a lista precisa de pelo menos uma secao")
+	}
+	if len(data.Sections) > maxListSections {
+		return "", fmt.Errorf("no maximo %d secoes", maxListSections)
+	}
+
+	totalRows := 0
+	for i, s := range data.Sections {
+		if len(s.Rows) == 0 {
+			return "", fmt.Errorf("secao %d sem opcoes", i+1)
+		}
+		totalRows += len(s.Rows)
+	}
+	if totalRows == 0 {
+		return "", errors.New("a lista precisa de pelo menos uma opcao")
+	}
+	if totalRows > maxListRows {
+		return "", fmt.Errorf("no maximo %d opcoes somando todas as secoes", maxListRows)
+	}
+
+	usedIDs := make(map[string]bool)
+	for _, section := range data.Sections {
+		for _, row := range section.Rows {
+			if row.RowId != "" {
+				usedIDs[row.RowId] = true
+			}
+		}
+	}
 	sections := []listSection{}
+	generatedRows := 0
 
 	for _, s := range data.Sections {
 		sectionTitle := s.Title
@@ -1914,7 +2279,15 @@ func sectionsToString(data *ListStruct) (string, error) {
 			}
 			rowId := r.RowId
 			if rowId == "" {
-				rowId = fmt.Sprintf("row_%d", len(rows))
+				// Reserve explicit IDs first, including those in later sections.
+				for {
+					rowId = fmt.Sprintf("row_%d", generatedRows)
+					generatedRows++
+					if !usedIDs[rowId] {
+						usedIDs[rowId] = true
+						break
+					}
+				}
 			}
 			rows = append(rows, row{
 				Header:      rowTitle,
@@ -1951,71 +2324,72 @@ func sectionsToString(data *ListStruct) (string, error) {
 	return string(jsonData), nil
 }
 
+// listBodyText renders the list's title and description into the single body
+// the native flow carries — a single_select has no separate title field, so a
+// bold first line stands in for it.
+func listBodyText(title, description string) string {
+	switch {
+	case title != "" && description != "":
+		return "*" + title + "*\n\n" + description
+	case title != "":
+		return "*" + title + "*"
+	default:
+		return description
+	}
+}
+
 func (s *sendService) SendList(data *ListStruct, instance *instance_model.Instance) (*MessageSendStruct, error) {
-	// Legacy ListMessage format - works on iOS, Android and Web
-	// Matching PAPI Node.js default (non-modern) path exactly
-
-	buttonText := data.ButtonText
-	if buttonText == "" {
-		buttonText = "Ver Menu"
-	}
-
-	// Build sections in legacy ListMessage format
-	var sections []*waE2E.ListMessage_Section
-	for _, sec := range data.Sections {
-		sectionTitle := sec.Title
-		if sectionTitle == "" {
-			sectionTitle = " "
-		}
-		var rows []*waE2E.ListMessage_Row
-		for i, r := range sec.Rows {
-			rowTitle := r.Title
-			if rowTitle == "" {
-				rowTitle = " "
-			}
-			rowId := r.RowId
-			if rowId == "" {
-				rowId = fmt.Sprintf("row_%d_%d", i, len(rows))
-			}
-			rows = append(rows, &waE2E.ListMessage_Row{
-				Title:       proto.String(rowTitle),
-				Description: proto.String(r.Description),
-				RowID:       proto.String(rowId),
-			})
-		}
-		sections = append(sections, &waE2E.ListMessage_Section{
-			Title: proto.String(sectionTitle),
-			Rows:  rows,
-		})
-	}
-
-	listType := waE2E.ListMessage_SINGLE_SELECT
-	listMessage := &waE2E.ListMessage{
-		Title:       proto.String(data.Title),
-		Description: proto.String(data.Description),
-		ButtonText:  proto.String(buttonText),
-		FooterText:  proto.String(data.FooterText),
-		ListType:    &listType,
-		Sections:    sections,
-	}
-
-	// Send as plain ListMessage (NO ViewOnceMessage wrapper) - matching PAPI Node.js
-	msg := &waE2E.Message{
-		ListMessage: listMessage,
-	}
-
-	message, err := s.SendMessage(instance, msg, "ListMessage", &SendDataStruct{
-		Number: data.Number,
-		Delay:  data.Delay,
-	})
-
+	msg, err := buildListMessage(data)
 	if err != nil {
-		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error sending list: %v", instance.Id, err)
+		return nil, err
+	}
+	return s.SendMessage(instance, msg, "InteractiveMessage", &SendDataStruct{
+		Number: data.Number, Delay: data.Delay,
+		MentionAll: data.MentionAll, MentionedJID: data.MentionedJID,
+		FormatJid: data.FormatJid, Quoted: data.Quoted,
+	})
+}
+
+func buildListMessage(data *ListStruct) (*waE2E.Message, error) {
+	selectParams, err := sectionsToString(data)
+	if err != nil {
 		return nil, err
 	}
 
-	s.loggerWrapper.GetLogger(instance.Id).LogInfo("[%s] List sent to %s", instance.Id, data.Number)
-	return message, nil
+	interactiveList := &waE2E.InteractiveMessage{
+		Body: &waE2E.InteractiveMessage_Body{
+			Text: proto.String(listBodyText(data.Title, data.Description)),
+		},
+		InteractiveMessage: &waE2E.InteractiveMessage_NativeFlowMessage_{
+			NativeFlowMessage: &waE2E.InteractiveMessage_NativeFlowMessage{
+				Buttons: []*waE2E.InteractiveMessage_NativeFlowMessage_NativeFlowButton{{
+					Name:             proto.String("single_select"),
+					ButtonParamsJSON: proto.String(selectParams),
+				}},
+				MessageVersion: proto.Int32(1),
+			},
+		},
+		ContextInfo: &waE2E.ContextInfo{},
+	}
+	if data.FooterText != "" {
+		interactiveList.Footer = &waE2E.InteractiveMessage_Footer{
+			Text: proto.String(data.FooterText),
+		}
+	}
+
+	return newInteractiveMessage(interactiveList), nil
+}
+
+func setInteractiveQuote(interactive *waE2E.InteractiveMessage, quoted QuotedStruct) {
+	if interactive == nil || quoted.MessageID == "" {
+		return
+	}
+	if interactive.ContextInfo == nil {
+		interactive.ContextInfo = &waE2E.ContextInfo{}
+	}
+	interactive.ContextInfo.StanzaID = proto.String(quoted.MessageID)
+	interactive.ContextInfo.Participant = proto.String(quoted.Participant)
+	interactive.ContextInfo.QuotedMessage = &waE2E.Message{Conversation: proto.String("")}
 }
 
 func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.Message, messageType string, data *SendDataStruct) (*MessageSendStruct, error) {
@@ -2031,7 +2405,7 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 
 	var message string
 	if data.Id == "" {
-		message = s.clientPointer[instance.Id].GenerateMessageID()
+		message = s.clientPointer.Get(instance.Id).GenerateMessageID()
 	} else {
 		message = data.Id
 	}
@@ -2042,14 +2416,14 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 			media = "audio"
 		}
 
-		err := s.clientPointer[instance.Id].SendChatPresence(context.Background(), recipient, types.ChatPresence("composing"), types.ChatPresenceMedia(media))
+		err := s.clientPointer.Get(instance.Id).SendChatPresence(context.Background(), recipient, types.ChatPresence("composing"), types.ChatPresenceMedia(media))
 		if err != nil {
 			return nil, err
 		}
 
 		time.Sleep(time.Duration(data.Delay) * time.Millisecond)
 
-		err = s.clientPointer[instance.Id].SendChatPresence(context.Background(), recipient, types.ChatPresence("paused"), types.ChatPresenceMedia(media))
+		err = s.clientPointer.Get(instance.Id).SendChatPresence(context.Background(), recipient, types.ChatPresence("paused"), types.ChatPresenceMedia(media))
 		if err != nil {
 			return nil, err
 		}
@@ -2134,16 +2508,18 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 				QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
 			}
 		case "InteractiveMessage":
-			if msg.InteractiveMessage != nil {
-				msg.InteractiveMessage.ContextInfo = &waE2E.ContextInfo{
+			setInteractiveQuote(msg.InteractiveMessage, data.Quoted)
+		case "ListMessage":
+			if msg.ListMessage != nil {
+				msg.ListMessage.ContextInfo = &waE2E.ContextInfo{
 					StanzaID:      proto.String(data.Quoted.MessageID),
 					Participant:   proto.String(data.Quoted.Participant),
 					QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
 				}
 			}
-		case "ListMessage":
-			if msg.ListMessage != nil {
-				msg.ListMessage.ContextInfo = &waE2E.ContextInfo{
+		case "ButtonsMessage":
+			if msg.ButtonsMessage != nil {
+				msg.ButtonsMessage.ContextInfo = &waE2E.ContextInfo{
 					StanzaID:      proto.String(data.Quoted.MessageID),
 					Participant:   proto.String(data.Quoted.Participant),
 					QuotedMessage: &waE2E.Message{Conversation: proto.String("")},
@@ -2184,21 +2560,32 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 		case "ContactMessage":
 			msg.ContactMessage.ContextInfo = &waE2E.ContextInfo{}
 		case "InteractiveMessage":
-			// ContextInfo already set in SendCarousel/SendButton/SendList
+			// SendButton/SendList/SendCarousel all build a non-nil ContextInfo.
+			// Promote it here anyway so a future builder that forgets does not
+			// silently ship a nil one.
+			if msg.InteractiveMessage != nil && msg.InteractiveMessage.ContextInfo == nil {
+				msg.InteractiveMessage.ContextInfo = &waE2E.ContextInfo{}
+			}
 		case "ListMessage":
-			// ContextInfo already set in SendList
+			if msg.ListMessage != nil && msg.ListMessage.ContextInfo == nil {
+				msg.ListMessage.ContextInfo = &waE2E.ContextInfo{}
+			}
+		case "ButtonsMessage":
+			if msg.ButtonsMessage != nil && msg.ButtonsMessage.ContextInfo == nil {
+				msg.ButtonsMessage.ContextInfo = &waE2E.ContextInfo{}
+			}
 		default:
 			return nil, fmt.Errorf("invalid messageType: %s", messageType)
 		}
 	}
 
-	isGroup := strings.Contains(data.Number, "@g.us")
+	isGroup := recipient.Server == types.GroupServer
 	isNewsletter := strings.Contains(data.Number, "@newsletter")
 
 	// Only try to get participants for actual groups, not newsletters
 	if isGroup && !isNewsletter {
 		if data.MentionAll {
-			groupInfo, err := s.clientPointer[instance.Id].GetGroupInfo(context.Background(), recipient)
+			groupInfo, err := s.clientPointer.Get(instance.Id).GetGroupInfo(context.Background(), recipient)
 			if err != nil {
 				return nil, err
 			}
@@ -2209,6 +2596,11 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 			}
 
 			switch messageType {
+			case "InteractiveMessage":
+				if msg.InteractiveMessage.ContextInfo == nil {
+					msg.InteractiveMessage.ContextInfo = &waE2E.ContextInfo{}
+				}
+				msg.InteractiveMessage.ContextInfo.MentionedJID = mentionedJIDs
 			case "ExtendedTextMessage":
 				if msg.ExtendedTextMessage.ContextInfo == nil {
 					msg.ExtendedTextMessage.ContextInfo = &waE2E.ContextInfo{}
@@ -2265,6 +2657,11 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 
 		if len(data.MentionedJID) > 0 {
 			switch messageType {
+			case "InteractiveMessage":
+				if msg.InteractiveMessage.ContextInfo == nil {
+					msg.InteractiveMessage.ContextInfo = &waE2E.ContextInfo{}
+				}
+				msg.InteractiveMessage.ContextInfo.MentionedJID = data.MentionedJID
 			case "ExtendedTextMessage":
 				if msg.ExtendedTextMessage.ContextInfo == nil {
 					msg.ExtendedTextMessage.ContextInfo = &waE2E.ContextInfo{}
@@ -2332,7 +2729,15 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 		s.loggerWrapper.GetLogger(instance.Id).LogInfo("[%s] Newsletter detected, using MediaHandle: %s", instance.Id, data.MediaHandle)
 	}
 
-	response, err := s.clientPointer[instance.Id].SendMessage(context.Background(), recipient, msg, sendExtra)
+	// Use the final recipient, not the raw number, to omit <bot> in groups.
+	additionalNodes, err := interactiveSendNodes(msg, recipient, data.AdditionalNodes)
+	if err != nil {
+		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Refusing to send: %v", instance.Id, err)
+		return nil, err
+	}
+	sendExtra.AdditionalNodes = additionalNodes
+
+	response, err := s.clientPointer.Get(instance.Id).SendMessage(context.Background(), recipient, msg, sendExtra)
 	if err != nil {
 		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error sending message: %v", instance.Id, err)
 		return nil, err
@@ -2340,10 +2745,15 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 
 	s.loggerWrapper.GetLogger(instance.Id).LogInfo("[%s] Message sent successfully! ServerID: %d", instance.Id, response.ServerID)
 
+	// Keep outgoing messages searchable too — sends made through the API do not
+	// produce an events.Message on this client, so the archive would otherwise
+	// only ever contain the inbound half of a conversation.
+	s.whatsmeowService.ArchiveOutgoingMessage(instance.Id, message, recipient.String(), msg, response.Timestamp)
+
 	messageInfo := types.MessageInfo{
 		MessageSource: types.MessageSource{
 			Chat:     recipient,
-			Sender:   *s.clientPointer[instance.Id].Store.ID,
+			Sender:   *s.clientPointer.Get(instance.Id).Store.ID,
 			IsFromMe: true,
 			IsGroup:  isGroup,
 		},
@@ -2397,15 +2807,15 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 		sticker := msg.GetStickerMessage()
 
 		if img != nil {
-			data, err = s.clientPointer[instance.Id].Download(context.Background(), img)
+			data, err = s.clientPointer.Get(instance.Id).Download(context.Background(), img)
 		} else if audio != nil {
-			data, err = s.clientPointer[instance.Id].Download(context.Background(), audio)
+			data, err = s.clientPointer.Get(instance.Id).Download(context.Background(), audio)
 		} else if document != nil {
-			data, err = s.clientPointer[instance.Id].Download(context.Background(), document)
+			data, err = s.clientPointer.Get(instance.Id).Download(context.Background(), document)
 		} else if video != nil {
-			data, err = s.clientPointer[instance.Id].Download(context.Background(), video)
+			data, err = s.clientPointer.Get(instance.Id).Download(context.Background(), video)
 		} else if sticker != nil {
-			data, err = s.clientPointer[instance.Id].Download(context.Background(), sticker)
+			data, err = s.clientPointer.Get(instance.Id).Download(context.Background(), sticker)
 
 			webpReader := bytes.NewReader(data)
 			img, err := webp.Decode(webpReader)
@@ -2459,34 +2869,49 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 }
 
 func (s *sendService) SendCarousel(data *CarouselStruct, instance *instance_model.Instance) (*MessageSendStruct, error) {
+	msg, err := buildCarouselMessage(data)
+	if err != nil {
+		return nil, err
+	}
 	client, err := s.ensureClientConnected(instance.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	formatJid := true
-	if data.FormatJid != nil {
-		formatJid = *data.FormatJid
+	cards := msg.InteractiveMessage.GetCarouselMessage().GetCards()
+	for i, card := range data.Cards {
+		header := s.buildInteractiveHeader(client, instance, card.Header.Title, card.Header.ImageUrl, card.Header.VideoUrl)
+		if header != nil {
+			header.Subtitle = proto.String(card.Header.Subtitle)
+			cards[i].Header = header
+		}
 	}
 
-	var recipient types.JID
-	var ok bool
-	recipient, ok = utils.ParseJID(data.Number)
-	if !ok && formatJid {
-		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error validating message fields", instance.Id)
-		return nil, errors.New("invalid phone number")
-	} else if !ok && !formatJid {
-		recipient = types.JID{
-			User:   data.Number,
-			Server: types.DefaultUserServer,
+	return s.SendMessage(instance, msg, "InteractiveMessage", &SendDataStruct{
+		Number: data.Number, Delay: data.Delay,
+		FormatJid: data.FormatJid, Quoted: data.Quoted,
+	})
+}
+
+func buildCarouselMessage(data *CarouselStruct) (*waE2E.Message, error) {
+	if len(data.Cards) == 0 {
+		return nil, errors.New("o carrossel precisa de pelo menos um card")
+	}
+	if len(data.Cards) > maxCarouselCards {
+		return nil, fmt.Errorf("no maximo %d cards", maxCarouselCards)
+	}
+	for i, card := range data.Cards {
+		if strings.TrimSpace(card.Body.Text) == "" {
+			return nil, fmt.Errorf("card %d sem texto no corpo", i+1)
+		}
+		if len(card.Buttons) > maxCardButtons {
+			return nil, fmt.Errorf("card %d com mais de %d botoes", i+1, maxCardButtons)
 		}
 	}
 
 	// Build carousel cards
 	cards := make([]*waE2E.InteractiveMessage, len(data.Cards))
 	messageVersion := int32(1)
-
-	s.loggerWrapper.GetLogger(instance.Id).LogInfo("[%s] Building carousel for %s with %d cards", instance.Id, recipient.String(), len(data.Cards))
 
 	for i, card := range data.Cards {
 		// Each card MUST have both header and body for carousel to work
@@ -2499,87 +2924,6 @@ func (s *sendService) SendCarousel(data *CarouselStruct, instance *instance_mode
 				Subtitle:           proto.String(card.Header.Subtitle),
 				HasMediaAttachment: proto.Bool(false),
 			},
-		}
-
-		// Add media to header if URL provided
-		if card.Header.ImageUrl != "" || card.Header.VideoUrl != "" {
-			header := interactiveCard.Header
-
-			if card.Header.ImageUrl != "" {
-				// Download image
-				resp, err := http.Get(card.Header.ImageUrl)
-				if err == nil {
-					defer resp.Body.Close()
-					fileData, err := io.ReadAll(resp.Body)
-					if err == nil {
-						uploaded, err := client.Upload(context.Background(), fileData, whatsmeow.MediaImage)
-						if err == nil {
-							// Generate JPEG thumbnail for iOS compatibility
-							var jpegThumb []byte
-							img, _, decErr := image.Decode(bytes.NewReader(fileData))
-							if decErr == nil {
-								// Resize to 72px thumbnail
-								bounds := img.Bounds()
-								thumbWidth := 72
-								thumbHeight := int(float64(bounds.Dy()) * float64(thumbWidth) / float64(bounds.Dx()))
-								if thumbHeight < 1 {
-									thumbHeight = 1
-								}
-								thumbImg := image.NewRGBA(image.Rect(0, 0, thumbWidth, thumbHeight))
-								for y := 0; y < thumbHeight; y++ {
-									for x := 0; x < thumbWidth; x++ {
-										srcX := x * bounds.Dx() / thumbWidth
-										srcY := y * bounds.Dy() / thumbHeight
-										thumbImg.Set(x, y, img.At(srcX+bounds.Min.X, srcY+bounds.Min.Y))
-									}
-								}
-								var thumbBuf bytes.Buffer
-								if jpeg.Encode(&thumbBuf, thumbImg, &jpeg.Options{Quality: 50}) == nil {
-									jpegThumb = thumbBuf.Bytes()
-								}
-							}
-
-							header.HasMediaAttachment = proto.Bool(true)
-							header.Media = &waE2E.InteractiveMessage_Header_ImageMessage{
-								ImageMessage: &waE2E.ImageMessage{
-									URL:            proto.String(uploaded.URL),
-									DirectPath:     proto.String(uploaded.DirectPath),
-									MediaKey:       uploaded.MediaKey,
-									Mimetype:       proto.String("image/jpeg"),
-									FileEncSHA256:  uploaded.FileEncSHA256,
-									FileSHA256:     uploaded.FileSHA256,
-									FileLength:     proto.Uint64(uint64(len(fileData))),
-									JPEGThumbnail:  jpegThumb,
-								},
-							}
-						}
-					}
-				}
-			} else if card.Header.VideoUrl != "" {
-				// Download and upload video
-				resp, err := http.Get(card.Header.VideoUrl)
-				if err == nil {
-					defer resp.Body.Close()
-					fileData, err := io.ReadAll(resp.Body)
-					if err == nil {
-						uploaded, err := client.Upload(context.Background(), fileData, whatsmeow.MediaVideo)
-						if err == nil {
-							header.HasMediaAttachment = proto.Bool(true)
-							header.Media = &waE2E.InteractiveMessage_Header_VideoMessage{
-								VideoMessage: &waE2E.VideoMessage{
-									URL:           proto.String(uploaded.URL),
-									DirectPath:    proto.String(uploaded.DirectPath),
-									MediaKey:      uploaded.MediaKey,
-									Mimetype:      proto.String("video/mp4"),
-									FileEncSHA256: uploaded.FileEncSHA256,
-									FileSHA256:    uploaded.FileSHA256,
-									FileLength:    proto.Uint64(uint64(len(fileData))),
-								},
-							}
-						}
-					}
-				}
-			}
 		}
 
 		// Add footer if exists
@@ -2599,32 +2943,46 @@ func (s *sendService) SendCarousel(data *CarouselStruct, instance *instance_mode
 				}
 
 				var buttonName string
-				var buttonParams string
+				var buttonParams map[string]string
 
 				switch buttonType {
 				case "URL":
 					// URL button - opens a link
 					buttonName = "cta_url"
-					buttonParams = fmt.Sprintf(`{"display_text":"%s","url":"%s"}`, btn.DisplayText, btn.Id)
+					buttonParams = map[string]string{"display_text": btn.DisplayText, "url": btn.Id, "merchant_url": btn.Id}
 				case "CALL":
 					// Call button - initiates a phone call
 					buttonName = "cta_call"
-					buttonParams = fmt.Sprintf(`{"display_text":"%s","phone_number":"%s"}`, btn.DisplayText, btn.Id)
+					buttonParams = map[string]string{"display_text": btn.DisplayText, "phone_number": btn.Id}
 				case "COPY":
 					// Copy button - copies text to clipboard
 					buttonName = "cta_copy"
-					buttonParams = fmt.Sprintf(`{"display_text":"%s","copy_code":"%s"}`, btn.DisplayText, btn.CopyCode)
+					buttonParams = map[string]string{"display_text": btn.DisplayText, "copy_code": btn.CopyCode}
 				case "REPLY":
 					fallthrough
 				default:
-					// Quick reply button (default)
+					// Quick reply button (default). An empty id makes two
+					// buttons indistinguishable when tapped, so fall back to a
+					// positional one scoped to the card.
 					buttonName = "quick_reply"
-					buttonParams = fmt.Sprintf(`{"display_text":"%s","id":"%s"}`, btn.DisplayText, btn.Id)
+					id := strings.TrimSpace(btn.Id)
+					if id == "" {
+						id = fmt.Sprintf("card_%d_btn_%d", i+1, j+1)
+					}
+					buttonParams = map[string]string{"display_text": btn.DisplayText, "id": id}
+				}
+
+				// json.Marshal, never string interpolation: a quote, backslash or
+				// newline in a label would otherwise emit malformed JSON and the
+				// client drops the whole button.
+				encodedParams, encErr := json.Marshal(buttonParams)
+				if encErr != nil {
+					return nil, encErr
 				}
 
 				buttons[j] = &waE2E.InteractiveMessage_NativeFlowMessage_NativeFlowButton{
 					Name:             proto.String(buttonName),
-					ButtonParamsJSON: proto.String(buttonParams),
+					ButtonParamsJSON: proto.String(string(encodedParams)),
 				}
 			}
 
@@ -2664,44 +3022,7 @@ func (s *sendService) SendCarousel(data *CarouselStruct, instance *instance_mode
 		}
 	}
 
-	// ContextInfo is REQUIRED for iOS compatibility
-	// Even if empty, iOS requires this field to display carousel
-	contextInfo := &waE2E.ContextInfo{}
-
-	// Add quoted message if exists
-	if data.Quoted.MessageID != "" {
-		contextInfo.StanzaID = proto.String(data.Quoted.MessageID)
-		if data.Quoted.Participant != "" {
-			participantJID, ok := utils.ParseJID(data.Quoted.Participant)
-			if ok {
-				contextInfo.Participant = proto.String(participantJID.String())
-			}
-		}
-	}
-
-	// Always set ContextInfo (required for iOS)
-	interactiveMsg.ContextInfo = contextInfo
-
-	// Build final message with MessageContextInfo for proper notification delivery
-	msg := &waE2E.Message{
-		InteractiveMessage: interactiveMsg,
-		MessageContextInfo: &waE2E.MessageContextInfo{
-			DeviceListMetadata: &waE2E.DeviceListMetadata{},
-		},
-	}
-
-	message, err := s.SendMessage(instance, msg, "InteractiveMessage", &SendDataStruct{
-		Number: data.Number,
-		Delay:  data.Delay,
-	})
-
-	if err != nil {
-		s.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Error sending carousel: %v", instance.Id, err)
-		return nil, err
-	}
-
-	s.loggerWrapper.GetLogger(instance.Id).LogInfo("[%s] Carousel sent to %s with %d cards", instance.Id, data.Number, len(data.Cards))
-	return message, nil
+	return newInteractiveMessage(interactiveMsg), nil
 }
 
 func (s *sendService) SendStatusText(data *StatusTextStruct, instance *instance_model.Instance) (*MessageSendStruct, error) {
@@ -2945,7 +3266,7 @@ func (s *sendService) sendStatusWebhook(messageSent *MessageSendStruct, instance
 }
 
 func NewSendService(
-	clientPointer map[string]*whatsmeow.Client,
+	clientPointer *whatsmeow_registry.Clients,
 	whatsmeowService whatsmeow_service.WhatsmeowService,
 	config *config.Config,
 	loggerWrapper *logger_wrapper.LoggerManager,

@@ -12,6 +12,7 @@ import (
 	instance_model "github.com/EvolutionAPI/evolution-go/pkg/instance/model"
 	logger_wrapper "github.com/EvolutionAPI/evolution-go/pkg/logger"
 	"github.com/EvolutionAPI/evolution-go/pkg/utils"
+	whatsmeow_registry "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/registry"
 	whatsmeow_service "github.com/EvolutionAPI/evolution-go/pkg/whatsmeow/service"
 	"github.com/gin-gonic/gin"
 	"github.com/vincent-petithory/dataurl"
@@ -37,7 +38,7 @@ type GroupService interface {
 }
 
 type groupService struct {
-	clientPointer    map[string]*whatsmeow.Client
+	clientPointer    *whatsmeow_registry.Clients
 	whatsmeowService whatsmeow_service.WhatsmeowService
 	loggerWrapper    *logger_wrapper.LoggerManager
 }
@@ -118,7 +119,7 @@ type UpdateGroupRequestParticipantsStruct struct {
 
 
 func (g *groupService) ensureClientConnected(instanceId string) (*whatsmeow.Client, error) {
-	client := g.clientPointer[instanceId]
+	client := g.clientPointer.Get(instanceId)
 	g.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Checking client connection status - Client exists: %v", instanceId, client != nil)
 
 	if client == nil {
@@ -132,7 +133,7 @@ func (g *groupService) ensureClientConnected(instanceId string) (*whatsmeow.Clie
 		g.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Instance started, waiting 2 seconds...", instanceId)
 		time.Sleep(2 * time.Second)
 
-		client = g.clientPointer[instanceId]
+		client = g.clientPointer.Get(instanceId)
 		g.loggerWrapper.GetLogger(instanceId).LogInfo("[%s] Checking new client - Exists: %v, Connected: %v",
 			instanceId,
 			client != nil,
@@ -642,7 +643,7 @@ func (g *groupService) UpdateGroupRequestParticipants(data *UpdateGroupRequestPa
 }
 
 func NewGroupService(
-	clientPointer map[string]*whatsmeow.Client,
+	clientPointer *whatsmeow_registry.Clients,
 	whatsmeowService whatsmeow_service.WhatsmeowService,
 	loggerWrapper *logger_wrapper.LoggerManager,
 ) GroupService {

@@ -14,7 +14,7 @@ import { Trash2, Layers, AlertTriangle, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 import useInstancesStore from '@/store/instancesStore';
-import { InstanceCard, InstancesHeader, CreateInstanceModal, QRCodeModal, ConnectConfigModal } from '@/components/instances';
+import { InstanceCard, InstancesHeader, CreateInstanceModal, QRCodeModal, ConnectConfigModal, SetProxyModal } from '@/components/instances';
 import SendMessageModal from '@/components/instances/SendMessageModal';
 import TestMessageModal from '@/components/instances/TestMessageModal';
 import EmptyState from '@/components/base/EmptyState';
@@ -41,6 +41,7 @@ export default function Instances() {
   const [currentPage] = useState(1);
   const [perPage] = useState(24);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     instance: Instance | null;
@@ -72,11 +73,19 @@ export default function Instances() {
     instance: null,
   });
 
+  const [setProxyModal, setSetProxyModal] = useState<{
+    isOpen: boolean;
+    instance: Instance | null;
+  }>({
+    isOpen: false,
+    instance: null,
+  });
+
   // Ref to track if initial fetch was done
   const initialFetchDone = useRef(false);
 
   useEffect(() => {
-    // Only fetch once on mount
+    // Fetch imediato no mount
     if (!initialFetchDone.current) {
       fetchInstances();
       initialFetchDone.current = true;
@@ -298,6 +307,55 @@ export default function Instances() {
     }
   }, [fetchInstances]);
 
+  // Rebuild the WhatsApp connection for an already-linked instance. This does
+  // not require a new QR code — it restarts the socket and refills the
+  // automatic retry budget on the server.
+  const handleReconnect = useCallback(async (instance: Instance) => {
+    if (!instance.apikey) {
+      toast.error('Token da instância não encontrado');
+      return;
+    }
+
+    setIsReconnecting(instance.id);
+    try {
+      toast.info(`Reconectando ${instance.instanceName}...`);
+      await instancesApi.restartInstance(instance.apikey);
+
+      // A 200 only means the reconnect was dispatched — the client is torn down
+      // and started again asynchronously, and may still fail to log in (for
+      // example when the device was unlinked or the proxy is dead). Poll the
+      // real connection state instead of reporting success optimistically.
+      const deadline = Date.now() + 15000;
+      let reconnected = false;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+        // Refresh the store so the cards update, then read the authoritative
+        // state straight from the API response.
+        await fetchInstances();
+        const fresh = await instancesApi.fetchInstances();
+        if (fresh.find((i) => i.id === instance.id)?.connected) {
+          reconnected = true;
+          break;
+        }
+      }
+
+      if (reconnected) {
+        toast.success(`${instance.instanceName} reconectada!`);
+      } else {
+        toast.error(
+          `${instance.instanceName} não reconectou. Verifique o proxy ou reconecte pelo QR Code.`
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao reconectar instância:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Erro ao reconectar instância'
+      );
+    } finally {
+      setIsReconnecting(null);
+    }
+  }, [fetchInstances]);
+
   const openDeleteModal = (instance: Instance) => {
     setDeleteModal({
       isOpen: true,
@@ -356,6 +414,14 @@ export default function Instances() {
     });
   };
 
+  const openSetProxyModal = useCallback((instance: Instance) => {
+    setSetProxyModal({ isOpen: true, instance });
+  }, []);
+
+  const closeSetProxyModal = () => {
+    setSetProxyModal({ isOpen: false, instance: null });
+  };
+
   const handleConnectConfirm = useCallback((config: ConnectConfig) => {
     if (connectConfigModal.instance) {
       handleConnectWithConfig(connectConfigModal.instance, config);
@@ -385,6 +451,11 @@ export default function Instances() {
         return;
       }
 
+      // The pairing code is issued once by /instance/pair and is NOT part of the
+      // instance payload, so it must survive every refresh — otherwise the code
+      // shown to the operator vanishes on the modal's 10s auto-refresh.
+      const pairingCode = qrcodeModal.instance.qrcode?.pairingCode;
+
       // If not connected, get fresh QR Code
       try {
         const qrData = await instancesApi.getQrCode(qrcodeModal.instance.apikey);
@@ -395,6 +466,7 @@ export default function Instances() {
           qrcode: {
             base64: qrData.qrcode,
             code: qrData.code,
+            pairingCode,
           },
         };
 
@@ -403,10 +475,13 @@ export default function Instances() {
           instance: instanceWithQr,
         });
       } catch {
-        // QR might be expired, just update with fetched data
+        // QR might be expired, but keep the pairing code visible.
         setQrcodeModal({
           isOpen: true,
-          instance: updatedInstance,
+          instance: {
+            ...updatedInstance,
+            qrcode: { ...updatedInstance.qrcode, pairingCode },
+          },
         });
       }
     } catch (error) {
@@ -459,15 +534,15 @@ export default function Instances() {
 
       {/* View Mode Toggle (removed for now, only cards view) */}
 
-      <div className="flex-1 overflow-auto" aria-busy={isLoading && !hasLoaded}>
-        {isLoading && !hasLoaded ? (
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            role="status"
-            aria-label="Carregando instâncias"
-          >
-            {Array.from({ length: 8 }).map((_, idx) => (
-              <Skeleton key={idx} className="h-48 rounded-xl" />
+          <div className="flex-1 overflow-auto" aria-busy={isLoading && !hasLoaded}>
+            {isLoading && !hasLoaded ? (
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                role="status"
+                aria-label="Carregando instâncias"
+              >
+                {Array.from({ length: 8 }).map((_, idx) => (
+                  <Skeleton key={idx} className="h-48 rounded-xl" />
             ))}
             <span className="sr-only">Carregando instâncias…</span>
           </div>
@@ -515,12 +590,15 @@ export default function Instances() {
                 <InstanceCard
                   instance={instance}
                   isDeleting={isDeleting}
+                  isReconnecting={isReconnecting}
                   onSettings={handleSettings}
                   onDelete={openDeleteModal}
                   onConnect={handleConnect}
                   onDisconnect={handleDisconnect}
+                  onReconnect={handleReconnect}
                   onSendMessage={openSendMessageModal}
                   onTestMessage={openTestMessageModal}
+                  onSetProxy={openSetProxyModal}
                 />
               </li>
             ))}
@@ -562,6 +640,14 @@ export default function Instances() {
         instance={testMessageModal.instance}
         open={testMessageModal.isOpen}
         onClose={closeTestMessageModal}
+      />
+
+      {/* Set Proxy Modal */}
+      <SetProxyModal
+        instance={setProxyModal.instance}
+        open={setProxyModal.isOpen}
+        onClose={closeSetProxyModal}
+        onSuccess={fetchInstances}
       />
 
       {/* Delete Confirmation Modal */}

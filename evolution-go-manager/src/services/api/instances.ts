@@ -11,7 +11,24 @@ import type {
   CreateInstancePayload,
   ConnectionState,
   InstanceStatus,
+  ProxyInfo,
 } from '@/types/instance';
+
+/**
+ * Parse the proxy column, which the API returns as a JSON string (empty when no
+ * proxy is configured). Malformed values are treated as "no proxy" rather than
+ * breaking the whole instance list.
+ */
+const parseProxy = (raw: string | undefined): ProxyInfo | undefined => {
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw) as ProxyInfo;
+    return parsed?.host ? parsed : undefined;
+  } catch {
+    console.warn('Configuração de proxy inválida recebida da API:', raw);
+    return undefined;
+  }
+};
 
 /**
  * Normalize raw instance data from Evolution GO API
@@ -31,6 +48,7 @@ const normalizeInstance = (raw: RawInstance): Instance => {
   }
 
   return {
+    proxy: parseProxy(raw.proxy),
     id: raw.id,
     instanceName: raw.name,
     status,
@@ -74,6 +92,39 @@ export const fetchInstance = async (instanceId: string): Promise<Instance> => {
     data: RawInstance;
   }>(`/instance/info/${instanceId}`);
   return normalizeInstance(response.data.data);
+};
+
+export interface ReachoutTimelock {
+  isActive: boolean;
+  timeEnforcementEnds: number; // unix seconds (0 when not active)
+  enforcementType: string;
+}
+
+export interface NewChatCapping {
+  cappingStatus: string;
+  totalQuota: number;
+  usedQuota: number;
+  cycleEnds: number; // unix seconds
+}
+
+export interface InstanceLimits {
+  reachoutTimelock: ReachoutTimelock | null;
+  newChatCapping: NewChatCapping | null;
+}
+
+/**
+ * Get WhatsApp account-level messaging limits for an instance
+ * GET /instance/limits/:instanceId
+ * Returns the reachout timelock (cause of error 463) and new-chat quota.
+ */
+export const getInstanceLimits = async (
+  instanceId: string
+): Promise<InstanceLimits> => {
+  const response = await apiClient.get<{
+    message: string;
+    data: InstanceLimits;
+  }>(`/instance/limits/${instanceId}`);
+  return response.data.data;
 };
 
 /**
@@ -157,7 +208,9 @@ export const pairInstance = async (
 ): Promise<{ pairingCode: string }> => {
   const response = await apiClient.post<{
     message: string;
-    data: { PairingCode: string };
+    // The Go struct field has no json tag, so it serializes as "PairingCode".
+    // camelCase is accepted too in case the tag is added upstream.
+    data: { PairingCode?: string; pairingCode?: string };
   }>(
     '/instance/pair',
     {
@@ -171,9 +224,16 @@ export const pairInstance = async (
     }
   );
 
-  return {
-    pairingCode: response.data.data.PairingCode,
-  };
+  const data = response.data?.data;
+  const pairingCode = data?.PairingCode ?? data?.pairingCode ?? '';
+
+  if (!pairingCode) {
+    throw new Error(
+      'A API não retornou um código de pareamento. Verifique se o número está correto e se a instância não está já conectada.'
+    );
+  }
+
+  return { pairingCode };
 };
 
 /**
@@ -220,27 +280,45 @@ export const updateAdvancedSettings = async (
   );
 };
 
+export interface QrResult {
+  qrcode: string;
+  code: string;
+  // Set when the account requires a WebAuthn passkey to finish linking (no QR).
+  passkeyStage?: string;
+  passkeyOpenUrl?: string;
+  passkeyCode?: string;
+}
+
 /**
- * Get QR Code for an instance
+ * Get QR Code (or passkey ceremony state) for an instance
  * GET /instance/qr
  * Requires instance token in apikey header
  */
 export const getQrCode = async (
   instanceToken: string
-): Promise<{ qrcode: string; code: string }> => {
+): Promise<QrResult> => {
   const response = await apiClient.get<{
     message: string;
-    data: { Qrcode: string; Code: string };
+    data: {
+      Qrcode?: string;
+      Code?: string;
+      passkeyStage?: string;
+      passkeyOpenUrl?: string;
+      passkeyCode?: string;
+    };
   }>('/instance/qr', {
     headers: {
       apikey: instanceToken,
     },
   });
 
-  // Map to lowercase for consistency
+  const d = response.data.data;
   return {
-    qrcode: response.data.data.Qrcode,
-    code: response.data.data.Code,
+    qrcode: d.Qrcode ?? '',
+    code: d.Code ?? '',
+    passkeyStage: d.passkeyStage,
+    passkeyOpenUrl: d.passkeyOpenUrl,
+    passkeyCode: d.passkeyCode,
   };
 };
 
@@ -276,9 +354,103 @@ export const deleteInstance = async (instanceId: string): Promise<void> => {
 /**
  * Reconnect an instance
  * POST /instance/reconnect
+ * Requires instance token in apikey header — the route is scoped to the
+ * instance that owns the token, not to the admin key.
  */
-export const restartInstance = async (): Promise<void> => {
-  await apiClient.post('/instance/reconnect');
+export const restartInstance = async (instanceToken: string): Promise<void> => {
+  await apiClient.post('/instance/reconnect', undefined, {
+    headers: {
+      apikey: instanceToken,
+    },
+  });
+};
+
+export interface ProxyConfig {
+  host: string;
+  port: string;
+  username?: string;
+  password?: string;
+  protocol?: string;
+}
+
+/**
+ * Set or update proxy configuration for an instance
+ * POST /instance/proxy/:instanceId
+ * Requires admin apikey header
+ */
+export const setInstanceProxy = async (
+  instanceId: string,
+  proxy: ProxyConfig
+): Promise<void> => {
+  await apiClient.post(`/instance/proxy/${instanceId}`, proxy);
+};
+
+/**
+ * Get the proxy configuration saved for an instance
+ * GET /instance/proxy/:instanceId
+ * Requires admin apikey header. Returns null when no proxy is configured.
+ */
+export const getInstanceProxy = async (
+  instanceId: string
+): Promise<ProxyConfig | null> => {
+  const response = await apiClient.get<{
+    message: string;
+    data: ProxyConfig | null;
+  }>(`/instance/proxy/${instanceId}`);
+  return response.data.data ?? null;
+};
+
+/**
+ * Reconnect an instance through its already-saved proxy
+ * POST /instance/proxy/:instanceId/reconnect
+ * Requires admin apikey header
+ */
+export const reconnectInstanceProxy = async (
+  instanceId: string
+): Promise<void> => {
+  await apiClient.post(`/instance/proxy/${instanceId}/reconnect`);
+};
+
+/**
+ * Result of probing a proxy: whether traffic gets through and which IP it
+ * exits from. `anonymous` is false when the exit IP matches the server's own,
+ * which means the proxy is not actually masking anything.
+ */
+export interface ProxyTestResult {
+  ok: boolean;
+  ip?: string;
+  serverIp?: string;
+  anonymous: boolean;
+  whatsappReachable: boolean;
+  latencyMs?: number;
+  protocol?: string;
+  error?: string;
+}
+
+/**
+ * Test a proxy without touching the instance's live connection.
+ * POST /instance/proxy/:instanceId/test
+ * Pass a proxy to check one before saving it; omit it to test the saved one.
+ * Requires admin apikey header
+ */
+export const testInstanceProxy = async (
+  instanceId: string,
+  proxy?: ProxyConfig
+): Promise<ProxyTestResult> => {
+  const response = await apiClient.post<ProxyTestResult>(
+    `/instance/proxy/${instanceId}/test`,
+    proxy ?? {}
+  );
+  return response.data;
+};
+
+/**
+ * Remove proxy configuration from an instance
+ * DELETE /instance/proxy/:instanceId
+ * Requires admin apikey header
+ */
+export const removeInstanceProxy = async (instanceId: string): Promise<void> => {
+  await apiClient.delete(`/instance/proxy/${instanceId}`);
 };
 
 /**
@@ -353,9 +525,90 @@ export const sendCarouselMessage = async (
   return response.data;
 };
 
+export interface CallSnapshot {
+  callId: string;
+  instanceId: string;
+  peerJid: string;
+  number: string;
+  direction: 'outgoing' | 'incoming';
+  mediaType: string;
+  state: string;
+  endReason?: string;
+  createdAt: string;
+  acceptedAt?: string;
+  endedAt?: string;
+  durationSeconds: number;
+}
+
+/**
+ * Place a WhatsApp call
+ * POST /call/offer
+ */
+export const offerCall = async (
+  instanceToken: string,
+  payload: { number: string; video?: boolean }
+): Promise<CallSnapshot> => {
+  const response = await apiClient.post<{ message: string; data: CallSnapshot }>(
+    '/call/offer',
+    payload,
+    { headers: { apikey: instanceToken } }
+  );
+  return response.data.data;
+};
+
+/**
+ * Hang up a call
+ * POST /call/terminate
+ */
+export const terminateCall = async (
+  instanceToken: string,
+  callId: string,
+  reason?: string
+): Promise<void> => {
+  await apiClient.post(
+    '/call/terminate',
+    { callId, reason },
+    { headers: { apikey: instanceToken } }
+  );
+};
+
+/**
+ * List the calls currently ringing or active
+ * GET /call/list
+ */
+export const listCalls = async (
+  instanceToken: string
+): Promise<CallSnapshot[]> => {
+  const response = await apiClient.get<{ message: string; data: CallSnapshot[] }>(
+    '/call/list',
+    { headers: { apikey: instanceToken } }
+  );
+  return response.data.data ?? [];
+};
+
+/**
+ * Read one call by id
+ * GET /call/status/:callId
+ */
+export const getCallStatus = async (
+  instanceToken: string,
+  callId: string
+): Promise<CallSnapshot> => {
+  const response = await apiClient.get<{ message: string; data: CallSnapshot }>(
+    `/call/status/${callId}`,
+    { headers: { apikey: instanceToken } }
+  );
+  return response.data.data;
+};
+
 export default {
   fetchInstances,
+  offerCall,
+  terminateCall,
+  listCalls,
+  getCallStatus,
   fetchInstance,
+  getInstanceLimits,
   createInstance,
   connectInstance,
   pairInstance,
@@ -366,6 +619,11 @@ export default {
   logoutInstance,
   deleteInstance,
   restartInstance,
+  getInstanceProxy,
+  reconnectInstanceProxy,
+  testInstanceProxy,
+  setInstanceProxy,
+  removeInstanceProxy,
   sendMessage,
   sendButtonMessage,
   sendListMessage,

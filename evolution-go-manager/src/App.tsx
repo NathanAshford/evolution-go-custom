@@ -12,6 +12,7 @@ import Events from '@/pages/Events';
 import Settings from '@/pages/Settings';
 import LicenseCallback from '@/pages/LicenseCallback';
 import ApiTester from '@/pages/ApiTester';
+import Mcp from '@/pages/Mcp';
 import useAuth from '@/hooks/useAuth';
 import { DarkModeProvider } from '@/contexts/ThemeContext';
 
@@ -44,6 +45,7 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="instances" element={<Instances />} />
               <Route path="instances/:instanceId/settings" element={<InstanceSettings />} />
+              <Route path="mcp" element={<Mcp />} />
               <Route path="messages" element={<Messages />} />
               <Route path="events" element={<Events />} />
               <Route path="api-tester" element={<ApiTester />} />

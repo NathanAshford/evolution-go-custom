@@ -7,18 +7,12 @@ coverage.*
 .idea/
 .vscode/
 .DS_Store
-.instance
 
-# Compiled binaries (Go builds output here at repo root / build/)
-/evolution-go
-/evolution-go-*
-!/evolution-go-manager/
+# Compiled binaries
+evolution-go
+server
 
-# Scratch dumps that used to get committed by accident
-DIFF-*.txt
-API-*-DOCS.txt
-carousel-sender.html
-*.postman_collection (*.json
-
-# Generated release directories (built by tools/build-dist/)
-dist/
+# Frontend (built in Docker)
+manager/dist/
+evolution-go-manager/node_modules/
+evolution-go-manager/dist/

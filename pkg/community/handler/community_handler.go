@@ -28,6 +28,7 @@ type communityHandler struct {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /community/create [post]
 func (c *communityHandler) CreateCommunity(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -69,6 +70,7 @@ func (c *communityHandler) CreateCommunity(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /community/add [post]
 func (c *communityHandler) CommunityAdd(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")
@@ -115,6 +117,7 @@ func (c *communityHandler) CommunityAdd(ctx *gin.Context) {
 // @Success 200 {object} gin.H "success"
 // @Failure 400 {object} gin.H "Error on validation"
 // @Failure 500 {object} gin.H "Internal server error"
+// @Security ApiKeyAuth
 // @Router /community/remove [post]
 func (c *communityHandler) CommunityRemove(ctx *gin.Context) {
 	getInstance := ctx.MustGet("instance")

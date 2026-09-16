@@ -2,12 +2,14 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Smartphone,
+  Plug,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 const navItems = [
   { to: '/manager', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/manager/instances', label: 'Instâncias', icon: Smartphone },
+  { to: '/manager/mcp', label: 'MCP', icon: Plug },
 ];
 
 function Sidebar() {
