@@ -61,7 +61,8 @@ type MarkReadStruct struct {
 }
 
 type DownloadMediaStruct struct {
-	Message *waE2E.Message `json:"message"`
+	Key     *waCommon.MessageKey `json:"key,omitempty"`
+	Message *waE2E.Message       `json:"message"`
 }
 
 type MessageStatusStruct struct {
@@ -282,6 +283,13 @@ func (m *messageService) DownloadMedia(data *DownloadMediaStruct, instance *inst
 		return nil, "", errors.New("invalid media type")
 	}
 
+	recoveryKey := data.Key
+	download := func(media whatsmeow.DownloadableMessage) ([]byte, error) {
+		key := recoveryKey
+		recoveryKey = nil
+		return downloadMediaWithRecovery(request.Context(), client, client.Store.LIDs, media, key)
+	}
+
 	userDirectory := fmt.Sprintf(`files/user_%s`, instance.Id)
 	_, err = os.Stat(userDirectory)
 	if os.IsNotExist(err) {
@@ -293,7 +301,7 @@ func (m *messageService) DownloadMedia(data *DownloadMediaStruct, instance *inst
 	}
 
 	if img != nil {
-		mediaData, err = client.Download(context.Background(), img)
+		mediaData, err = download(img)
 		if err != nil {
 			m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Failed to download image", instance.Id)
 			msg := fmt.Sprintf("Failed to download image %v", err)
@@ -303,7 +311,7 @@ func (m *messageService) DownloadMedia(data *DownloadMediaStruct, instance *inst
 	}
 
 	if audio != nil {
-		mediaData, err = client.Download(context.Background(), audio)
+		mediaData, err = download(audio)
 		if err != nil {
 			m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Failed to download audio", instance.Id)
 			msg := fmt.Sprintf("Failed to download audio %v", err)
@@ -313,7 +321,7 @@ func (m *messageService) DownloadMedia(data *DownloadMediaStruct, instance *inst
 	}
 
 	if document != nil {
-		mediaData, err = client.Download(context.Background(), document)
+		mediaData, err = download(document)
 		if err != nil {
 			m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Failed to download document", instance.Id)
 			msg := fmt.Sprintf("Failed to download document %v", err)
@@ -323,7 +331,7 @@ func (m *messageService) DownloadMedia(data *DownloadMediaStruct, instance *inst
 	}
 
 	if video != nil {
-		mediaData, err = client.Download(context.Background(), video)
+		mediaData, err = download(video)
 		if err != nil {
 			m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Failed to download video", instance.Id)
 			msg := fmt.Sprintf("Failed to download video %v", err)
@@ -333,7 +341,7 @@ func (m *messageService) DownloadMedia(data *DownloadMediaStruct, instance *inst
 	}
 
 	if sticker != nil {
-		mediaData, err = client.Download(context.Background(), sticker)
+		mediaData, err = download(sticker)
 		if err != nil {
 			m.loggerWrapper.GetLogger(instance.Id).LogError("[%s] Failed to download sticker", instance.Id)
 			msg := fmt.Sprintf("Failed to download sticker %v", err)

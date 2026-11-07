@@ -5391,6 +5391,9 @@ const docTemplate = `{
         "github_com_EvolutionAPI_evolution-go_pkg_message_service.DownloadMediaStruct": {
             "type": "object",
             "properties": {
+                "key": {
+                    "$ref": "#/definitions/waCommon.MessageKey"
+                },
                 "message": {
                     "$ref": "#/definitions/waE2E.Message"
                 }
